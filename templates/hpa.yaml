@@ -1,4 +1,4 @@
-{{- define "templates.hpa" -}}
+{{- if .Values.hpa.enabled }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 {{- if and (not $config.activeRegion) $config.hpa }}

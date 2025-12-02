@@ -1,9 +1,9 @@
 apiVersion: v2
 name: templates
 description: A Helm chart for Kubernetes
-type: library
+type: application
 version: 0.1.0
 dependencies:
   - name: core
     version: x.x.x
-    repository: "file://../.."
+    repository: "file://."

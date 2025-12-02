@@ -3,10 +3,8 @@ replicas: 3
 image:
   tag: prod
 
-labels:
-  devCustomLabael: fireDevopsDev
-
 hpa:
+  enabled: false
   maxReplicas: 4
   resources:
     cpu: 

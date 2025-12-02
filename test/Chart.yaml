@@ -1,9 +1,0 @@
-apiVersion: v2
-name: templates-test-single
-description: A Helm library template functions
-type: application
-version: 0.1.0
-dependencies:
-  - name: templates
-    version: x.x.x
-    repository: "file://.."

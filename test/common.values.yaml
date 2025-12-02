@@ -1,7 +1,6 @@
 port: 5000
+
 activeRegion: us-east-1
-terminationGracePeriodSeconds: 55
-serviceAccount: service-account-shlomo
 
 image:
   url: test
@@ -11,21 +10,6 @@ resources:
   memory: 500Mi
 
 replicas: 1
-
-labels:
-  customLabaels: fireDevops
-
-annotations:
-  configMap:
-    configMapAnnotation: configMap
-  service:
-    serviceAnnotation: service
-  deployment:
-    deploymentAnnotation: deployment
-  route:
-    routeAnnotation: route
-  cronJob:
-    cronjobAnnotation: cronJob
 
 volumes:
   secrets:
@@ -48,17 +32,25 @@ env:
       - key: DB_IDS
         variable: test2
 
+deployment:
+  enabled: false
+
+service:
+  enabled: false
+
 cronJob:
+  enabled: false
   schedule: "@hourly"
   successfulJobsHistory: 4
   failedJobsHistory: 5
-  entryPoint:
+  entrypoint:
     command:
       - "/bin/bash"
     args:
       - "echo hello"
 
 configMap:
+  enabled: true
   data:
     DQ_STRING: "VALUE"
     NUMBER: 4565

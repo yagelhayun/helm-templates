@@ -1,4 +1,4 @@
-{{- define "templates.deployment" -}}
+{{- if .Values.deployment.enabled }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 kind: Deployment

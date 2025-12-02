@@ -1,4 +1,4 @@
-{{- define "templates.service" }}
+{{- if .Values.service.enabled }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 {{- $port := required "Missing .Values.port" $config.port }}

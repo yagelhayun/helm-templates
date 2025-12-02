@@ -1,4 +1,4 @@
-{{- define "templates.cronjob" -}}
+{{- if .Values.cronJob.enabled }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 kind: CronJob
@@ -32,13 +32,11 @@ spec:
           containers:
             - name: {{ include "core.general.name" $context }}
               image: {{ include "core.container.image" $context }}
-              {{- $command := include "core.cronjob.command" $context }}
-              {{- if $command }}
-              command: {{ $command }}
+              {{- with $config.cronJob.entrypoint.command }}
+              command: {{ toJson . }}
               {{- end }}
-              {{- $args := include "core.cronjob.args" $context }}
-              {{- if $args }}
-              args: {{ $args }}
+              {{- with $config.cronJob.entrypoint.args }}
+              args: {{ toJson . }}
               {{- end }}
               {{- $envFrom := include "core.container.envFrom" $context }}
               {{- if $envFrom }}
