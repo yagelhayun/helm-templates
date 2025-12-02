@@ -1,0 +1,24 @@
+{{- define "templates.service" }}
+{{- $config := include "core.general.config" . | fromYaml }}
+{{- $context := merge (dict "$" $) $config }}
+{{- $port := required "Missing .Values.port" $config.port }}
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ include "core.service.name" $context }}
+  labels: 
+    {{- include "core.common.labels" $context | nindent 4 }}
+    {{- with $config.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with ($config.annotations).service }}
+  annotations: 
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ports:
+  - protocol: TCP
+    port: {{ $port }}
+    targetPort: {{ $port }}
+  selector: {{ include "core.common.labels" $context | nindent 4 }}
+{{- end }}

@@ -1,0 +1,95 @@
+port: 5000
+activeRegion: us-east-1
+terminationGracePeriodSeconds: 55
+serviceAccount: service-account-shlomo
+
+image:
+  url: test
+
+resources:
+  cpu: 250m
+  memory: 500Mi
+
+replicas: 1
+
+labels:
+  customLabaels: fireDevops
+
+annotations:
+  configMap:
+    configMapAnnotation: configMap
+  service:
+    serviceAnnotation: service
+  deployment:
+    deploymentAnnotation: deployment
+  route:
+    routeAnnotation: route
+  cronJob:
+    cronjobAnnotation: cronJob
+
+volumes:
+  secrets:
+    fire-devops-push:
+      mountPath: /
+
+envFrom:
+  secrets:
+    fire-devops-push: {}
+  configMaps:
+    fire-devops-push: {}
+
+env:
+  secrets:
+    devops-switchover:
+      - key: PORTAL_API_TOKEN
+        variable: test1
+  configMaps:
+    devops-switchover:
+      - key: DB_IDS
+        variable: test2
+
+cronJob:
+  schedule: "@hourly"
+  successfulJobsHistory: 4
+  failedJobsHistory: 5
+  entryPoint:
+    command:
+      - "/bin/bash"
+    args:
+      - "echo hello"
+
+configMap:
+  data:
+    DQ_STRING: "VALUE"
+    NUMBER: 4565
+    SQ_STRING: '0/10 * * * *'
+    BOOLEAN: true
+
+regions:
+  us-east-1:
+    configMap:
+      data:
+        ENDPOINT: "storage.us-east-1.com"
+        URL: "sso.us-east-1.com"
+  us-west-1:
+    configMap:
+      data:
+        ENDPOINT: "storage.us-west-1.com"
+        URL: "sso.us-west-1.com"
+
+probes:
+  readiness:
+    httpGet:
+      path: /whoami
+      port: 3000
+      scheme: HTTP
+  liveness:
+    httpGet:
+      path: /whoami
+      port: 3000
+      scheme: HTTP
+    failureThreshold: 1
+    initialDelaySeconds: 15
+    periodSeconds: 15
+    successThreshold: 1
+    timeoutSeconds: 30

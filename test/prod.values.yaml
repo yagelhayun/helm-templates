@@ -1,0 +1,15 @@
+replicas: 3
+
+image:
+  tag: prod
+
+labels:
+  devCustomLabael: fireDevopsDev
+
+hpa:
+  maxReplicas: 4
+  resources:
+    cpu: 
+      averageUtilization: 70
+    memory:
+      averageUtilization: 70

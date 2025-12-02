@@ -1,0 +1,58 @@
+{{- define "templates.cronjob" -}}
+{{- $config := include "core.general.config" . | fromYaml }}
+{{- $context := merge (dict "$" $) $config }}
+kind: CronJob
+apiVersion: batch/v1
+metadata:
+  name: {{ include "core.cronjob.name" $context }}
+  labels:
+    {{- include "core.common.labels" $context | nindent 4 }}
+    {{- with $config.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with ($config.annotations).cronJob }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: {{ required "Missing .Values.cronJob.schedule property" $context.cronJob.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: {{ int $context.cronJob.successfulJobsHistory | default 3 }}
+  failedJobsHistoryLimit: {{ int $context.cronJob.failedJobsHistory | default 1 }}
+  jobTemplate:
+    spec:
+      completions: 1
+      template:
+        spec:
+          serviceAccountName: {{ $context.serviceAccount | default "default" }}
+          {{- $volumes := include "core.pod.volumes" $context }}
+          {{- if $volumes }}
+          volumes: {{ $volumes | indent 10 }}
+          {{- end }}
+          containers:
+            - name: {{ include "core.general.name" $context }}
+              image: {{ include "core.container.image" $context }}
+              {{- $command := include "core.cronjob.command" $context }}
+              {{- if $command }}
+              command: {{ $command }}
+              {{- end }}
+              {{- $args := include "core.cronjob.args" $context }}
+              {{- if $args }}
+              args: {{ $args }}
+              {{- end }}
+              {{- $envFrom := include "core.container.envFrom" $context }}
+              {{- if $envFrom }}
+              envFrom: {{ $envFrom | indent 14 }}
+              {{- end }}
+              resources: {{ include "core.container.resources" $context | indent 16 }}
+              {{- $env := include "core.container.env" $context }}
+              {{- if $env }}
+              env: {{ $env | indent 14 }}
+              {{- end }}
+              imagePullPolicy: Always
+              {{- $volumeMounts := include "core.container.volumeMounts" $context }}
+              {{- if $volumeMounts }}
+              volumeMounts: {{ $volumeMounts | indent 14 }}
+              {{- end }}
+          restartPolicy: OnFailure
+{{- end }}

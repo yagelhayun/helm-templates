@@ -1,0 +1,5 @@
+.git*
+*.tgz
+README.md
+test*
+.helmignore

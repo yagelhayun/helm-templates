@@ -1,0 +1,22 @@
+{{- define "templates.configmap" -}}
+{{- $config := include "core.general.config" . | fromYaml }}
+{{- $context := merge (dict "$" $) $config }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "core.configmap.name" $context }}
+  labels:
+    {{- include "core.common.labels" $context | nindent 4 }}
+    {{- with $config.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with ($config.annotations).configMap }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+data:
+{{- $configMapData := required "Missing .Values.configMap.data" ($config.configMap).data }}
+{{- range $key, $value := $configMapData }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}
+{{- end }}

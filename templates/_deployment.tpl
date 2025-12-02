@@ -1,0 +1,66 @@
+{{- define "templates.deployment" -}}
+{{- $config := include "core.general.config" . | fromYaml }}
+{{- $context := merge (dict "$" $) $config }}
+kind: Deployment
+apiVersion: apps/v1
+metadata: 
+  name: {{ include "core.deployment.name" $context }}
+  labels:
+    {{- include "core.deployment.labels" $context | nindent 4 }}
+    {{- with $config.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with ($config.annotations).deployment }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ include "core.deployment.replicas" $context }}
+  selector: 
+    matchLabels: {{ include "core.common.labels" $context | nindent 6 }}
+  revisionHistoryLimit: 1
+  strategy: {{ include "core.common.strategy.rollingUpdate" $context | nindent 4 }}
+  template:
+    metadata:
+      labels: {{ include "core.common.labels" $context | nindent 8 }}
+      {{- $annotations := include "core.pod.annotations" $context }}
+      {{- if $annotations }}
+      annotations: {{ $annotations | indent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ $context.serviceAccount | default "default" }}
+      {{- $volumes := include "core.pod.volumes" $context }}
+      {{- if $volumes }}
+      volumes: {{ $volumes | indent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ int $context.terminationGracePeriodSeconds | default 30 }}
+      topologySpreadConstraints: {{ include "core.pod.topologySpreadConstraints" $context | nindent 6 }}
+      containers:
+      - name: {{ include "core.general.name" $context }}
+        image: {{ include "core.container.image" $context }}
+        {{- if $context.port }}
+        ports:
+        - containerPort: {{ $config.port }}
+          protocol: TCP
+        {{- end }}
+        {{- $envFrom := include "core.container.envFrom" $context }}
+        {{- if $envFrom }}
+        envFrom: {{ $envFrom | indent 8 }}
+        {{- end }}
+        resources: {{ include "core.container.resources" $context | indent 10 }}
+        {{- $env := include "core.container.env" $context }}
+        {{- if $env }}
+        env: {{ $env | indent 8 }}
+        {{- end }}
+        {{- $volumeMounts := include "core.container.volumeMounts" $context }}
+        {{- if $volumeMounts }}
+        volumeMounts: {{ $volumeMounts | indent 10 }}
+        {{- end }}
+        {{- if ($context.probes).readiness }}
+        readinessProbe: {{ include "core.container.readinessProbe" $context | indent 10 }}
+        {{- end }}
+        {{- if ($context.probes).liveness }}
+        livenessProbe: {{ include "core.container.livenessProbe" $context | indent 10 }}
+        {{- end }}
+        imagePullPolicy: Always 
+{{- end }}
