@@ -33,7 +33,7 @@ spec:
       {{- if $volumes }}
       volumes: {{ $volumes | indent 8 }}
       {{- end }}
-      terminationGracePeriodSeconds: {{ int $context.terminationGracePeriodSeconds | default 30 }}
+      terminationGracePeriodSeconds: {{ ternary 30 (int $context.terminationGracePeriodSeconds) (kindIs "invalid" $context.terminationGracePeriodSeconds) }}
       topologySpreadConstraints: {{ include "core.pod.topologySpreadConstraints" $context | nindent 6 }}
       containers:
       - name: {{ include "core.general.name" $context }}
