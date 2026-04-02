@@ -15,7 +15,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  schedule: {{ required "Missing .Values.cronJob.schedule property" $config.cronJob.schedule | quote }}
+  schedule: {{ $config.cronJob.schedule | quote }}
   concurrencyPolicy: {{ $config.cronJob.concurrencyPolicy | default "Forbid" }}
   successfulJobsHistoryLimit: {{ int $config.cronJob.successfulJobsHistory | default 3 }}
   failedJobsHistoryLimit: {{ int $config.cronJob.failedJobsHistory | default 1 }}

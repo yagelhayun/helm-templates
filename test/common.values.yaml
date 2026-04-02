@@ -28,6 +28,8 @@ envFrom:
     fire-devops-push: {}
   configMaps:
     fire-devops-push: {}
+  # kaki:
+  #   zorem: {}
 
 env:
   secrets:

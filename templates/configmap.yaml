@@ -15,8 +15,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 data:
-{{- $configMapData := required "Missing .Values.configMap.data" ($config.configMap).data }}
-{{- range $key, $value := $configMapData }}
+{{- range $key, $value := ($config.configMap).data }}
   {{ $key }}: {{ $value | quote }}
 {{- end }}
 {{- end }}
