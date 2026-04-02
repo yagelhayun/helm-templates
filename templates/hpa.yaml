@@ -5,10 +5,10 @@
 {{- $maxReplicas := required "Missing .hpa.maxReplicas" $config.hpa.maxReplicas }}
 kind: HorizontalPodAutoscaler
 apiVersion: autoscaling/v2
-metadata: 
+metadata:
   name: {{ include "core.hpa.name" $context }}
   {{- with ($config.annotations).hpa }}
-  annotations: 
+  annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:

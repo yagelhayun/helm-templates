@@ -1,13 +1,18 @@
 replicas: 3
 
+revisionHistoryLimit: 3
+
 image:
   tag: prod
+
+resources:
+  limitMultiplier: 2
 
 hpa:
   enabled: false
   maxReplicas: 4
   resources:
-    cpu: 
+    cpu:
       averageUtilization: 70
     memory:
       averageUtilization: 70

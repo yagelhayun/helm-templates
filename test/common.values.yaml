@@ -1,9 +1,16 @@
+global:
+  region: us-east-1
+  ignoreLookup: "true"
+
 port: 5000
+portName: api
 
 activeRegion: us-east-1
 
 image:
   url: test
+  pullSecrets:
+    - my-registry-secret
 
 resources:
   cpu: 250m
@@ -33,14 +40,15 @@ env:
         variable: test2
 
 deployment:
-  enabled: false
+  enabled: true
 
 service:
-  enabled: false
+  enabled: true
 
 cronJob:
-  enabled: false
+  enabled: true
   schedule: "@hourly"
+  concurrencyPolicy: Allow
   successfulJobsHistory: 4
   failedJobsHistory: 5
   entrypoint:
@@ -49,13 +57,16 @@ cronJob:
     args:
       - "echo hello"
 
+hpa:
+  enabled: false
+
 configMap:
   enabled: true
   data:
     DQ_STRING: "VALUE"
-    NUMBER: 4565
+    NUMBER: "4565"
     SQ_STRING: '0/10 * * * *'
-    BOOLEAN: true
+    BOOLEAN: "true"
 
 regions:
   us-east-1:
@@ -85,3 +96,31 @@ probes:
     periodSeconds: 15
     successThreshold: 1
     timeoutSeconds: 30
+  startup:
+    httpGet:
+      path: /health
+      port: 3000
+    failureThreshold: 30
+    periodSeconds: 10
+
+initContainers:
+  - name: db-migration
+    image:
+      url: myrepo/migrator
+      tag: "1.0"
+    command: ["/bin/sh"]
+    args: ["-c", "echo running migration"]
+    resources:
+      cpu: 100m
+      memory: 128Mi
+
+sidecars:
+  - name: log-shipper
+    image:
+      url: fluent/fluent-bit
+      tag: "2.2"
+    port: 2020
+    portName: metrics
+    resources:
+      cpu: 50m
+      memory: 64Mi

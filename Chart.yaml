@@ -6,4 +6,4 @@ version: 0.1.0
 dependencies:
   - name: core
     version: x.x.x
-    repository: "file://."
+    repository: "file://../helm-core"
