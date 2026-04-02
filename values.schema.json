@@ -1,0 +1,263 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["global"],
+  "properties": {
+    "global": {
+      "type": "object",
+      "required": ["region"],
+      "properties": {
+        "region":       { "type": "string", "minLength": 1 },
+        "ignoreLookup": { "type": "string", "enum": ["true", "false"] },
+        "commit":       { "type": ["string", "integer", "number"] },
+        "image":        { "$ref": "#/definitions/imageConfig" },
+        "envFrom":      { "$ref": "#/definitions/envFromConfig" },
+        "volumes":      { "$ref": "#/definitions/volumesConfig" },
+        "env":          { "$ref": "#/definitions/envConfig" }
+      }
+    },
+
+    "image":                        { "$ref": "#/definitions/imageConfig" },
+    "port":                         { "type": "integer", "minimum": 1, "maximum": 65535 },
+    "portName":                     { "type": "string" },
+    "activeRegion":                 { "type": "string" },
+    "replicas":                     { "type": "integer", "minimum": 0 },
+    "revisionHistoryLimit":         { "type": "integer", "minimum": 1 },
+    "serviceAccount":               { "type": "string" },
+    "terminationGracePeriodSeconds":{ "type": "integer", "minimum": 0 },
+    "resources":                    { "$ref": "#/definitions/resourcesConfig" },
+    "volumes":                      { "$ref": "#/definitions/volumesConfig" },
+    "envFrom":                      { "$ref": "#/definitions/envFromConfig" },
+    "env":                          { "$ref": "#/definitions/envConfig" },
+    "probes":                       { "$ref": "#/definitions/probesConfig" },
+    "labels":                       { "type": "object" },
+    "annotations":                  { "type": "object" },
+    "regions":                      { "type": "object" },
+
+    "configMap": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "data": {
+          "type": "object",
+          "additionalProperties": { "type": ["string", "number", "boolean"] }
+        }
+      },
+      "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+      "then": { "required": ["data"] }
+    },
+
+    "deployment": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": { "enabled": { "type": "boolean" } }
+    },
+
+    "service": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": { "enabled": { "type": "boolean" } }
+    },
+
+    "cronJob":        { "$ref": "#/definitions/cronJobConfig" },
+    "hpa":            { "$ref": "#/definitions/hpaConfig" },
+    "initContainers": { "type": "array", "items": { "$ref": "#/definitions/containerSpec" } },
+    "sidecars":       { "type": "array", "items": { "$ref": "#/definitions/containerSpec" } }
+  },
+
+  "definitions": {
+    "imageConfig": {
+      "type": "object",
+      "properties": {
+        "url":         { "type": "string" },
+        "tag":         { "type": "string" },
+        "pullPolicy":  { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] },
+        "pullSecrets": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "resourcesConfig": {
+      "type": "object",
+      "required": ["cpu", "memory"],
+      "properties": {
+        "cpu":            { "type": ["string", "number"] },
+        "memory":         { "type": "string" },
+        "limitMultiplier":{ "type": "number", "minimum": 1 }
+      }
+    },
+
+    "volumeMount": {
+      "type": "object",
+      "required": ["mountPath"],
+      "properties": {
+        "mountPath":   { "type": "string" },
+        "defaultMode": { "type": "integer", "minimum": 0, "maximum": 511 },
+        "files":       { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "volumesConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "secrets":    { "type": "object", "additionalProperties": { "$ref": "#/definitions/volumeMount" } },
+        "configMaps": { "type": "object", "additionalProperties": { "$ref": "#/definitions/volumeMount" } },
+        "empty":      { "type": "object", "additionalProperties": { "$ref": "#/definitions/volumeMount" } }
+      }
+    },
+
+    "envFromConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "secrets":    { "type": "object" },
+        "configMaps": { "type": "object" }
+      }
+    },
+
+    "envVar": {
+      "type": "object",
+      "required": ["key", "variable"],
+      "additionalProperties": false,
+      "properties": {
+        "key":      { "type": "string" },
+        "variable": { "type": "string" }
+      }
+    },
+
+    "envResourceMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "$ref": "#/definitions/envVar" }
+      }
+    },
+
+    "envConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "secrets":    { "$ref": "#/definitions/envResourceMap" },
+        "configMaps": { "$ref": "#/definitions/envResourceMap" }
+      }
+    },
+
+    "probeSpec": {
+      "type": "object",
+      "oneOf": [
+        {
+          "required": ["httpGet"],
+          "not": { "required": ["exec"] },
+          "properties": {
+            "httpGet": {
+              "type": "object",
+              "required": ["path"],
+              "properties": {
+                "path":   { "type": "string" },
+                "port":   { "type": ["integer", "string"] },
+                "scheme": { "type": "string", "enum": ["HTTP", "HTTPS"] }
+              }
+            }
+          }
+        },
+        {
+          "required": ["exec"],
+          "not": { "required": ["httpGet"] },
+          "properties": {
+            "exec": {
+              "type": "object",
+              "required": ["command"],
+              "properties": {
+                "command": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "failureThreshold":    { "type": "integer", "minimum": 1 },
+        "initialDelaySeconds": { "type": "integer", "minimum": 0 },
+        "periodSeconds":       { "type": "integer", "minimum": 1 },
+        "successThreshold":    { "type": "integer", "minimum": 1 },
+        "timeoutSeconds":      { "type": "integer", "minimum": 1 }
+      }
+    },
+
+    "probesConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "readiness": { "$ref": "#/definitions/probeSpec" },
+        "liveness":  { "$ref": "#/definitions/probeSpec" },
+        "startup":   { "$ref": "#/definitions/probeSpec" }
+      }
+    },
+
+    "containerSpec": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name":     { "type": "string" },
+        "image":    { "$ref": "#/definitions/imageConfig" },
+        "port":     { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "portName": { "type": "string" },
+        "command":  { "type": "array" },
+        "args":     { "type": "array" },
+        "envFrom":  { "$ref": "#/definitions/envFromConfig" },
+        "env":      { "$ref": "#/definitions/envConfig" },
+        "resources":{ "$ref": "#/definitions/resourcesConfig" },
+        "volumes":  { "$ref": "#/definitions/volumesConfig" },
+        "probes":   { "$ref": "#/definitions/probesConfig" }
+      }
+    },
+
+    "cronJobConfig": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled":                { "type": "boolean" },
+        "schedule":               { "type": "string" },
+        "concurrencyPolicy":      { "type": "string", "enum": ["Allow", "Forbid", "Replace"] },
+        "successfulJobsHistory":  { "type": "integer", "minimum": 0 },
+        "failedJobsHistory":      { "type": "integer", "minimum": 0 },
+        "entrypoint": {
+          "type": "object",
+          "properties": {
+            "command": { "type": "array" },
+            "args":    { "type": "array" }
+          }
+        }
+      },
+      "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+      "then": { "required": ["schedule"] }
+    },
+
+    "hpaConfig": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled":     { "type": "boolean" },
+        "maxReplicas": { "type": "integer", "minimum": 1 },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cpu":    { "$ref": "#/definitions/hpaMetric" },
+            "memory": { "$ref": "#/definitions/hpaMetric" }
+          }
+        }
+      },
+      "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+      "then": { "required": ["maxReplicas"] }
+    },
+
+    "hpaMetric": {
+      "type": "object",
+      "required": ["averageUtilization"],
+      "properties": {
+        "averageUtilization": { "type": "integer", "minimum": 1, "maximum": 99 }
+      }
+    }
+  }
+}

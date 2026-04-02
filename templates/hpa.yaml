@@ -2,7 +2,6 @@
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 {{- if and (not $config.activeRegion) $config.hpa }}
-{{- $maxReplicas := required "Missing .hpa.maxReplicas" $config.hpa.maxReplicas }}
 kind: HorizontalPodAutoscaler
 apiVersion: autoscaling/v2
 metadata:
@@ -17,23 +16,15 @@ spec:
     name: {{ include "core.deployment.name" $context }}
     apiVersion: apps/v1
   minReplicas: {{ $config.replicas }}
-  maxReplicas: {{ $maxReplicas }}
+  maxReplicas: {{ $config.hpa.maxReplicas }}
   metrics:
   {{- range $resource, $target := ($config.hpa).resources }}
   - type: Resource
     resource:
-      {{- if or (eq $resource "cpu") (eq $resource "memory") }}
       name: {{ $resource }}
-      {{- else }}
-        {{- fail "The resource must be 'cpu' or 'memory'" }}
-      {{- end }}
       target:
         type: Utilization
-        {{- if and (ge (int $target.averageUtilization) 0) (le (int $target.averageUtilization) 100) }}
         averageUtilization: {{ $target.averageUtilization | default 70 }}
-        {{- else }}
-          {{- fail "target.averageUtilization must be between 0 and 100" }}
-        {{- end }}
   {{- end }}
 {{- end }}
 {{- end }}
