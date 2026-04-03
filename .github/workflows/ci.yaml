@@ -29,15 +29,15 @@ jobs:
         working-directory: helm-templates
 
       - name: Lint (validates chart structure and JSON schema)
-        run: |
-          helm lint . \
-            -f test/common.values.yaml \
-            -f test/prod.values.yaml
+        run: >-
+          helm lint .
+          -f test/common.values.yaml
+          -f test/prod.values.yaml
         working-directory: helm-templates
 
       - name: Template (renders all manifests against test values)
-        run: |
-          helm template my-service . \
-            -f test/common.values.yaml \
-            -f test/prod.values.yaml
+        run: >-
+          helm template my-service .
+          -f test/common.values.yaml
+          -f test/prod.values.yaml
         working-directory: helm-templates
