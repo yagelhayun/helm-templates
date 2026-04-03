@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-and-template:
+    name: Lint and Template
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout helm-templates
+        uses: actions/checkout@v4
+        with:
+          path: helm-templates
+
+      # helm-templates depends on helm-core via file://../helm-core,
+      # so we check it out as a sibling directory to match local structure.
+      - name: Checkout helm-core
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/helm-core
+          path: helm-core
+
+      - uses: azure/setup-helm@v4
+
+      - name: Build dependencies
+        run: helm dependency build
+        working-directory: helm-templates
+
+      - name: Lint (validates chart structure and JSON schema)
+        run: >-
+          helm lint .
+            -f test/common.values.yaml
+            -f test/prod.values.yaml
+        working-directory: helm-templates
+
+      - name: Template (renders all manifests against test values)
+        run: >-
+          helm template my-service .
+            -f test/common.values.yaml
+            -f test/prod.values.yaml
+        working-directory: helm-templates
