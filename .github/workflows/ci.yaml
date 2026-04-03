@@ -43,7 +43,7 @@ jobs:
         working-directory: helm-templates
 
       - name: Install helm-unittest
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest --verify=false
 
       - name: Run unit tests
         run: helm unittest -f 'unit-tests/*_test.yaml' .
