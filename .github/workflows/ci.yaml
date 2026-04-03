@@ -31,13 +31,20 @@ jobs:
       - name: Lint (validates chart structure and JSON schema)
         run: >-
           helm lint .
-          -f test/common.values.yaml
-          -f test/prod.values.yaml
+          -f test-values/common.values.yaml
+          -f test-values/prod.values.yaml
         working-directory: helm-templates
 
       - name: Template (renders all manifests against test values)
         run: >-
           helm template my-service .
-          -f test/common.values.yaml
-          -f test/prod.values.yaml
+          -f test-values/common.values.yaml
+          -f test-values/prod.values.yaml
+        working-directory: helm-templates
+
+      - name: Install helm-unittest
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest
+
+      - name: Run unit tests
+        run: helm unittest -f 'unit-tests/*_test.yaml' .
         working-directory: helm-templates

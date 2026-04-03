@@ -1,0 +1,56 @@
+suite: configMap opt-in and region merging
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: does not render when configMap.enabled is false
+    values:
+      - test-values/common.values.yaml
+    set:
+      configMap.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a ConfigMap when configMap.enabled is true
+    values:
+      - test-values/common.values.yaml
+    set:
+      configMap.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+
+  - it: includes root-level data keys
+    values:
+      - test-values/common.values.yaml
+    set:
+      configMap.enabled: true
+    # configMap.data.DQ_STRING=VALUE defined at root level
+    asserts:
+      - equal:
+          path: data.DQ_STRING
+          value: VALUE
+
+  - it: applies region-specific data key override
+    values:
+      - test-values/common.values.yaml
+    set:
+      configMap.enabled: true
+      # global.region=us-east-1; regions.us-east-1.configMap.data.ENDPOINT=storage.us-east-1.com
+    asserts:
+      - equal:
+          path: data.ENDPOINT
+          value: storage.us-east-1.com
+
+  - it: picks the correct region override for a different region
+    values:
+      - test-values/common.values.yaml
+    set:
+      configMap.enabled: true
+      global.region: us-west-1
+    asserts:
+      - equal:
+          path: data.ENDPOINT
+          value: storage.us-west-1.com

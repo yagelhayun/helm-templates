@@ -1,0 +1,51 @@
+suite: cronJob opt-in and configuration
+templates:
+  - templates/cronjob.yaml
+tests:
+  - it: does not render when cronJob.enabled is false
+    values:
+      - test-values/common.values.yaml
+    set:
+      cronJob.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a CronJob when cronJob.enabled is true
+    values:
+      - test-values/common.values.yaml
+    set:
+      cronJob.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: CronJob
+
+  - it: uses the configured schedule
+    values:
+      - test-values/common.values.yaml
+    set:
+      cronJob.enabled: true
+      # cronJob.schedule=@hourly from common.values.yaml
+    asserts:
+      - equal:
+          path: spec.schedule
+          value: "@hourly"
+
+  - it: defaults concurrencyPolicy to Forbid when not set
+    set:
+      global.region: us-east-1
+      global.ignoreLookup: "true"
+      port: 5000
+      replicas: 1
+      resources.cpu: 250m
+      resources.memory: 512Mi
+      image.url: myapp
+      cronJob.enabled: true
+      cronJob.schedule: "0 * * * *"
+      # no concurrencyPolicy set
+    asserts:
+      - equal:
+          path: spec.concurrencyPolicy
+          value: Forbid

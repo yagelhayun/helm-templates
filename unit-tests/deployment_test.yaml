@@ -1,0 +1,56 @@
+suite: deployment opt-in and behavior
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: does not render when deployment.enabled is false
+    values:
+      - test-values/common.values.yaml
+    set:
+      deployment.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a Deployment when deployment.enabled is true
+    values:
+      - test-values/common.values.yaml
+    set:
+      deployment.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+
+  - it: uses 0 replicas when not in the active region
+    values:
+      - test-values/common.values.yaml
+    set:
+      deployment.enabled: true
+      global.region: us-west-1
+      # activeRegion=us-east-1 (from common.values.yaml) ≠ us-west-1 → 0 replicas
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 0
+
+  - it: uses configured replicas when in the active region
+    values:
+      - test-values/common.values.yaml
+    set:
+      deployment.enabled: true
+      # global.region=us-east-1 == activeRegion=us-east-1, replicas=1
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: adds checksum annotation to pod template when configMap data is defined
+    values:
+      - test-values/common.values.yaml
+    set:
+      deployment.enabled: true
+      configMap.enabled: true
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations

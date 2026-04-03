@@ -1,0 +1,27 @@
+{{- if .Values.service.enabled }}
+{{- $config := include "core.general.config" . | fromYaml }}
+{{- $context := merge (dict "$" $) $config }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "core.service.name" $context }}-test-connectivity"
+  labels: {{ include "core.common.labels" $context | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  {{- with (include "core.pod.imagePullSecrets" $context) }}
+  imagePullSecrets: {{ . | indent 4 }}
+  {{- end }}
+  containers:
+    - name: connectivity
+      image: busybox:1.37
+      imagePullPolicy: IfNotPresent
+      command:
+        - /bin/sh
+        - -c
+        - >-
+          wget -qO /dev/null --timeout=10
+          http://{{ include "core.service.name" $context }}:{{ $context.port }}/
+{{- end }}
