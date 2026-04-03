@@ -1,6 +1,6 @@
 suite: helm test — service connectivity pod
 templates:
-  - templates/tests/service-connectivity.yaml
+  - templates/integration-tests/service-connectivity.yaml
 tests:
   - it: does not render when service.enabled is false
     values:
