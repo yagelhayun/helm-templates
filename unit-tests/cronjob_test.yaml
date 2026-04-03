@@ -4,7 +4,7 @@ templates:
 tests:
   - it: does not render when cronJob.enabled is false
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       cronJob.enabled: false
     asserts:
@@ -13,7 +13,7 @@ tests:
 
   - it: renders a CronJob when cronJob.enabled is true
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       cronJob.enabled: true
     asserts:
@@ -24,7 +24,7 @@ tests:
 
   - it: uses the configured schedule
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       cronJob.enabled: true
       # cronJob.schedule=@hourly from common.values.yaml

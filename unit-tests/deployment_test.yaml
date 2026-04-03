@@ -4,7 +4,7 @@ templates:
 tests:
   - it: does not render when deployment.enabled is false
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       deployment.enabled: false
     asserts:
@@ -13,7 +13,7 @@ tests:
 
   - it: renders a Deployment when deployment.enabled is true
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       deployment.enabled: true
     asserts:
@@ -24,7 +24,7 @@ tests:
 
   - it: uses 0 replicas when not in the active region
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       deployment.enabled: true
       global.region: us-west-1
@@ -36,7 +36,7 @@ tests:
 
   - it: uses configured replicas when in the active region
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       deployment.enabled: true
       # global.region=us-east-1 == activeRegion=us-east-1, replicas=1
@@ -47,7 +47,7 @@ tests:
 
   - it: adds checksum annotation to pod template when configMap data is defined
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       deployment.enabled: true
       configMap.enabled: true

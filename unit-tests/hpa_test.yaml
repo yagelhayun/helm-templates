@@ -4,7 +4,7 @@ templates:
 tests:
   - it: does not render when hpa.enabled is false
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     # hpa.enabled=false in common.values.yaml
     asserts:
       - hasDocuments:
@@ -12,8 +12,8 @@ tests:
 
   - it: does not render when hpa.enabled is true but activeRegion is set
     values:
-      - test-values/common.values.yaml
-      - test-values/prod.values.yaml
+      - ../test-values/common.values.yaml
+      - ../test-values/prod.values.yaml
     set:
       hpa.enabled: true
       # activeRegion=us-east-1 from common.values.yaml → HPA suppressed
@@ -23,8 +23,8 @@ tests:
 
   - it: renders an HPA when hpa.enabled is true and activeRegion is not set
     values:
-      - test-values/common.values.yaml
-      - test-values/prod.values.yaml
+      - ../test-values/common.values.yaml
+      - ../test-values/prod.values.yaml
     set:
       hpa.enabled: true
       activeRegion: ""

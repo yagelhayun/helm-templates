@@ -4,7 +4,7 @@ templates:
 tests:
   - it: does not render when service.enabled is false
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       service.enabled: false
     asserts:
@@ -13,7 +13,7 @@ tests:
 
   - it: renders a test Pod when service.enabled is true
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       service.enabled: true
     asserts:
@@ -24,7 +24,7 @@ tests:
 
   - it: has the helm test hook annotation
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       service.enabled: true
     asserts:
@@ -34,7 +34,7 @@ tests:
 
   - it: targets the correct service host and port in the wget command
     values:
-      - test-values/common.values.yaml
+      - ../test-values/common.values.yaml
     set:
       service.enabled: true
       port: 9000
