@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
-  "required": ["global", "port", "replicas", "resources"],
+  "required": ["global", "port", "resources"],
   "properties": {
     "global": {
       "type": "object",
@@ -37,6 +37,8 @@
     "regions":                      { "type": "object" },
     "strategy":                     { "$ref": "#/definitions/strategyConfig" },
     "topologySpreadConstraints":    { "$ref": "#/definitions/topologySpreadConstraintsConfig" },
+    "workload":                     { "$ref": "#/definitions/workloadConfig" },
+    "statefulSet":                  { "$ref": "#/definitions/statefulSetConfig" },
 
     "configMap": {
       "type": "object",
@@ -53,13 +55,6 @@
       "then": { "required": ["data"] }
     },
 
-    "deployment": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["enabled"],
-      "properties": { "enabled": { "type": "boolean" } }
-    },
-
     "service": {
       "type": "object",
       "additionalProperties": false,
@@ -74,6 +69,54 @@
 
     "core": { "type": "object" }
   },
+
+  "allOf": [
+    {
+      "title": "replicas is required for Deployment and StatefulSet",
+      "if": {
+        "not": {
+          "required": ["workload"],
+          "properties": {
+            "workload": {
+              "required": ["type"],
+              "properties": { "type": { "const": "DaemonSet" } }
+            }
+          }
+        }
+      },
+      "then": { "required": ["replicas"] }
+    },
+    {
+      "title": "statefulSet block is required when workload.type is StatefulSet",
+      "if": {
+        "required": ["workload"],
+        "properties": {
+          "workload": {
+            "required": ["type"],
+            "properties": { "type": { "const": "StatefulSet" } }
+          }
+        }
+      },
+      "then": { "required": ["statefulSet"] }
+    },
+    {
+      "title": "HPA must be disabled for DaemonSet workloads",
+      "if": {
+        "required": ["workload"],
+        "properties": {
+          "workload": {
+            "required": ["type"],
+            "properties": { "type": { "const": "DaemonSet" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "hpa": { "properties": { "enabled": { "const": false } } }
+        }
+      }
+    }
+  ],
 
   "definitions": {
     "imageConfig": {
@@ -270,13 +313,49 @@
       "then": { "required": ["maxReplicas"] }
     },
 
+    "workloadConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["Deployment", "StatefulSet", "DaemonSet"] }
+      }
+    },
+
+    "statefulSetConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["serviceName"],
+      "properties": {
+        "serviceName":          { "type": "string", "minLength": 1 },
+        "podManagementPolicy":  { "type": "string", "enum": ["OrderedReady", "Parallel"] },
+        "volumeClaimTemplates": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/volumeClaimTemplate" }
+        }
+      }
+    },
+
+    "volumeClaimTemplate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "size"],
+      "properties": {
+        "name":         { "type": "string" },
+        "storageClass": { "type": "string" },
+        "size":         { "type": "string" },
+        "accessMode":   { "type": "string", "enum": ["ReadWriteOnce", "ReadWriteMany", "ReadOnlyMany"] }
+      }
+    },
+
     "strategyConfig": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "type":           { "type": "string", "enum": ["RollingUpdate", "Recreate"] },
+        "type":           { "type": "string", "enum": ["RollingUpdate", "Recreate", "OnDelete"] },
         "maxUnavailable": { "type": ["string", "integer"] },
-        "maxSurge":       { "type": ["string", "integer"] }
+        "maxSurge":       { "type": ["string", "integer"] },
+        "partition":      { "type": "integer", "minimum": 0 }
       }
     },
 

@@ -21,6 +21,16 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: does not render when workload.type is DaemonSet even if hpa.enabled is true
+    values:
+      - ../test-values/daemonset.values.yaml
+    set:
+      hpa.enabled: false
+      # schema enforces hpa.enabled: false for DaemonSet; template also guards
+    asserts:
+      - hasDocuments:
+          count: 0
+
   - it: renders an HPA when hpa.enabled is true and activeRegion is not set
     values:
       - ../test-values/common.values.yaml

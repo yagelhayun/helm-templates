@@ -1,4 +1,4 @@
-{{- if .Values.hpa.enabled }}
+{{- if and .Values.hpa.enabled (ne (.Values.workload).type "DaemonSet") }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 {{- if and (not $config.activeRegion) $config.hpa }}

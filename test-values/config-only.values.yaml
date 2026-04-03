@@ -1,3 +1,5 @@
+# Config-only chart — no workload type set.
+# Used for testing that workload templates do not render when workload.type is absent.
 global:
   region: us-east-1
   ignoreLookup: "true"
@@ -10,8 +12,6 @@ resources:
 image:
   url: myapp
 
-workload:
-  type: Deployment
 service:
   enabled: false
 configMap:
@@ -20,8 +20,3 @@ cronJob:
   enabled: false
 hpa:
   enabled: false
-
-topologySpreadConstraints:
-  - maxSkew: 2
-    topologyKey: kubernetes.io/hostname
-    whenUnsatisfiable: DoNotSchedule

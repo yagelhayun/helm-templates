@@ -39,8 +39,8 @@ env:
       - key: DB_HOSTS
         variable: DATABASE_HOSTS
 
-deployment:
-  enabled: true
+workload:
+  type: Deployment
 
 service:
   enabled: true

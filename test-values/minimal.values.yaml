@@ -12,8 +12,9 @@ resources:
 image:
   url: myapp
 
-deployment:
-  enabled: true
+workload:
+  type: Deployment
+
 service:
   enabled: false
 configMap:

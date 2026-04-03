@@ -90,11 +90,9 @@ tests:
 
   - it: uses configured revisionHistoryLimit
     values:
-      - ../test-values/common.values.yaml
-      - ../test-values/prod.values.yaml
+      - ../test-values/minimal.values.yaml
     set:
-      deployment.enabled: true
-    # prod.values.yaml: revisionHistoryLimit: 3
+      revisionHistoryLimit: 3
     asserts:
       - equal:
           path: spec.revisionHistoryLimit

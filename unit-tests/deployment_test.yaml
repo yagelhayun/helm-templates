@@ -2,20 +2,23 @@ suite: deployment opt-in and behavior
 templates:
   - templates/deployment.yaml
 tests:
-  - it: does not render when deployment.enabled is false
+  - it: does not render when workload.type is not set
     values:
-      - ../test-values/common.values.yaml
-    set:
-      deployment.enabled: false
+      - ../test-values/config-only.values.yaml
     asserts:
       - hasDocuments:
           count: 0
 
-  - it: renders a Deployment when deployment.enabled is true
+  - it: does not render when workload.type is StatefulSet
+    values:
+      - ../test-values/statefulset.values.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a Deployment when workload.type is Deployment
     values:
       - ../test-values/common.values.yaml
-    set:
-      deployment.enabled: true
     asserts:
       - hasDocuments:
           count: 1
@@ -26,7 +29,6 @@ tests:
     values:
       - ../test-values/common.values.yaml
     set:
-      deployment.enabled: true
       global.region: us-west-1
       # activeRegion=us-east-1 (from common.values.yaml) ≠ us-west-1 → 0 replicas
     asserts:
@@ -37,9 +39,7 @@ tests:
   - it: uses configured replicas when in the active region
     values:
       - ../test-values/common.values.yaml
-    set:
-      deployment.enabled: true
-      # global.region=us-east-1 == activeRegion=us-east-1, replicas=1
+    # global.region=us-east-1 == activeRegion=us-east-1, replicas=1
     asserts:
       - equal:
           path: spec.replicas
@@ -49,7 +49,6 @@ tests:
     values:
       - ../test-values/common.values.yaml
     set:
-      deployment.enabled: true
       configMap.enabled: true
     asserts:
       - exists:

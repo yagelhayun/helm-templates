@@ -1,0 +1,108 @@
+suite: StatefulSet opt-in and behavior
+templates:
+  - templates/statefulset.yaml
+tests:
+  - it: does not render when workload.type is not StatefulSet
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a StatefulSet when workload.type is StatefulSet
+    values:
+      - ../test-values/statefulset.values.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: StatefulSet
+
+  - it: sets serviceName from statefulSet.serviceName
+    values:
+      - ../test-values/statefulset.values.yaml
+    asserts:
+      - equal:
+          path: spec.serviceName
+          value: myapp-headless
+
+  - it: defaults podManagementPolicy to OrderedReady
+    values:
+      - ../test-values/statefulset.values.yaml
+    asserts:
+      - equal:
+          path: spec.podManagementPolicy
+          value: OrderedReady
+
+  - it: uses Parallel podManagementPolicy when configured
+    values:
+      - ../test-values/statefulset.values.yaml
+    set:
+      statefulSet.podManagementPolicy: Parallel
+    asserts:
+      - equal:
+          path: spec.podManagementPolicy
+          value: Parallel
+
+  - it: defaults updateStrategy to RollingUpdate
+    values:
+      - ../test-values/statefulset.values.yaml
+    asserts:
+      - equal:
+          path: spec.updateStrategy.type
+          value: RollingUpdate
+
+  - it: uses OnDelete updateStrategy when configured via strategy.type
+    values:
+      - ../test-values/statefulset.values.yaml
+    set:
+      strategy.type: OnDelete
+    asserts:
+      - equal:
+          path: spec.updateStrategy.type
+          value: OnDelete
+      - notExists:
+          path: spec.updateStrategy.rollingUpdate
+
+  - it: renders partition in updateStrategy when set via strategy.partition
+    values:
+      - ../test-values/statefulset.values.yaml
+    set:
+      strategy.partition: 2
+    asserts:
+      - equal:
+          path: spec.updateStrategy.rollingUpdate.partition
+          value: 2
+
+  - it: renders volumeClaimTemplates
+    values:
+      - ../test-values/statefulset.values.yaml
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.name
+          value: data
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.resources.requests.storage
+          value: 10Gi
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.accessModes[0]
+          value: ReadWriteOnce
+
+  - it: uses 0 replicas when activeRegion does not match
+    values:
+      - ../test-values/statefulset.values.yaml
+    set:
+      activeRegion: us-west-1
+      global.region: us-east-1
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 0
+
+  - it: defaults revisionHistoryLimit to 1
+    values:
+      - ../test-values/statefulset.values.yaml
+    asserts:
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 1

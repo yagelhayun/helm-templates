@@ -1,0 +1,36 @@
+global:
+  region: us-east-1
+  ignoreLookup: "true"
+
+port: 5000
+portName: api
+replicas: 3
+
+image:
+  url: myrepo/myapp
+  tag: v1.0.0
+
+resources:
+  cpu: 250m
+  memory: 512Mi
+
+workload:
+  type: StatefulSet
+
+statefulSet:
+  serviceName: myapp-headless
+  podManagementPolicy: OrderedReady
+  volumeClaimTemplates:
+    - name: data
+      storageClass: standard
+      size: 10Gi
+      accessMode: ReadWriteOnce
+
+service:
+  enabled: true
+configMap:
+  enabled: false
+cronJob:
+  enabled: false
+hpa:
+  enabled: false

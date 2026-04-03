@@ -1,16 +1,16 @@
-{{- if eq (.Values.workload).type "Deployment" }}
+{{- if eq (.Values.workload).type "StatefulSet" }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
-kind: Deployment
+kind: StatefulSet
 apiVersion: apps/v1
 metadata:
-  name: {{ include "core.deployment.name" $context }}
+  name: {{ include "core.statefulset.name" $context }}
   labels:
-    {{- include "core.deployment.labels" $context | nindent 4 }}
+    {{- include "core.statefulset.labels" $context | nindent 4 }}
     {{- with $config.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with ($config.annotations).deployment }}
+  {{- with ($config.annotations).statefulSet }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -18,8 +18,10 @@ spec:
   replicas: {{ include "core.common.replicas" $context }}
   selector:
     matchLabels: {{ include "core.common.labels" $context | nindent 6 }}
+  serviceName: {{ $config.statefulSet.serviceName }}
+  podManagementPolicy: {{ ($config.statefulSet).podManagementPolicy | default "OrderedReady" }}
+  updateStrategy: {{ include "core.common.strategy" $context | nindent 4 }}
   revisionHistoryLimit: {{ ternary 1 (int $config.revisionHistoryLimit) (kindIs "invalid" $config.revisionHistoryLimit) }}
-  strategy: {{ include "core.common.strategy" $context | nindent 4 }}
   template:
     metadata:
       labels: {{ include "core.common.labels" $context | nindent 8 }}
@@ -41,9 +43,12 @@ spec:
       {{- with (include "core.pod.topologySpreadConstraints" $context) }}
       topologySpreadConstraints: {{ . | indent 6 }}
       {{- end }}
-      containers: 
+      containers:
         {{- include "core.container.render" $context | indent 8 }}
         {{- with (include "core.container.sidecars" $context) }}
         {{- . | indent 8 }}
         {{- end }}
+  {{- with (include "core.pod.volumeClaimTemplates" $context) }}
+  volumeClaimTemplates: {{ . | indent 4 }}
+  {{- end }}
 {{- end }}

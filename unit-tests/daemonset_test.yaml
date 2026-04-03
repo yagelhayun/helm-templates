@@ -1,0 +1,70 @@
+suite: DaemonSet opt-in and behavior
+templates:
+  - templates/daemonset.yaml
+tests:
+  - it: does not render when workload.type is not DaemonSet
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a DaemonSet when workload.type is DaemonSet
+    values:
+      - ../test-values/daemonset.values.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: DaemonSet
+
+  - it: does not have a replicas field
+    values:
+      - ../test-values/daemonset.values.yaml
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: defaults updateStrategy to RollingUpdate
+    values:
+      - ../test-values/daemonset.values.yaml
+    asserts:
+      - equal:
+          path: spec.updateStrategy.type
+          value: RollingUpdate
+
+  - it: defaults updateStrategy maxUnavailable to 25%
+    values:
+      - ../test-values/daemonset.values.yaml
+    asserts:
+      - equal:
+          path: spec.updateStrategy.rollingUpdate.maxUnavailable
+          value: "25%"
+
+  - it: uses OnDelete updateStrategy when configured
+    values:
+      - ../test-values/daemonset.values.yaml
+    set:
+      strategy.type: OnDelete
+    asserts:
+      - equal:
+          path: spec.updateStrategy.type
+          value: OnDelete
+      - notExists:
+          path: spec.updateStrategy.rollingUpdate
+
+  - it: renders the container with the correct image
+    values:
+      - ../test-values/daemonset.values.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: myrepo/node-agent:v1.0.0
+
+  - it: renders the container port
+    values:
+      - ../test-values/daemonset.values.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 9100
