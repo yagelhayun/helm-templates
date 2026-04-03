@@ -27,22 +27,22 @@ tests:
       - ../test-values/common.values.yaml
     set:
       configMap.enabled: true
-    # configMap.data.DQ_STRING=VALUE defined at root level
+    # configMap.data.APP_ENV=staging defined at root level
     asserts:
       - equal:
-          path: data.DQ_STRING
-          value: VALUE
+          path: data.APP_ENV
+          value: staging
 
   - it: applies region-specific data key override
     values:
       - ../test-values/common.values.yaml
     set:
       configMap.enabled: true
-      # global.region=us-east-1; regions.us-east-1.configMap.data.ENDPOINT=storage.us-east-1.com
+      # global.region=us-east-1; regions.us-east-1.configMap.data.ENDPOINT=storage.us-east-1.example.com
     asserts:
       - equal:
           path: data.ENDPOINT
-          value: storage.us-east-1.com
+          value: storage.us-east-1.example.com
 
   - it: picks the correct region override for a different region
     values:
@@ -53,4 +53,4 @@ tests:
     asserts:
       - equal:
           path: data.ENDPOINT
-          value: storage.us-west-1.com
+          value: storage.us-west-1.example.com

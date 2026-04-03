@@ -1,0 +1,56 @@
+suite: service opt-in and configuration
+templates:
+  - templates/service.yaml
+tests:
+  - it: does not render when service.enabled is false
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a Service when service.enabled is true
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Service
+
+  - it: exposes the configured port
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 5000
+
+  - it: uses portName for the named port
+    values:
+      - ../test-values/common.values.yaml
+    # portName: api
+    asserts:
+      - equal:
+          path: spec.ports[0].name
+          value: api
+
+  - it: defaults port name to http when portName is not set
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      service.enabled: true
+    asserts:
+      - equal:
+          path: spec.ports[0].name
+          value: http
+
+  - it: selector matches the common labels
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - equal:
+          path: spec.selector["app.kubernetes.io/name"]
+          value: templates

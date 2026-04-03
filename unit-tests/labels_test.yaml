@@ -1,0 +1,50 @@
+suite: labels — standard, commit, and custom
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: renders standard app.kubernetes.io/name label
+    values:
+      - ../test-values/minimal.values.yaml
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: templates
+
+  - it: renders app.kubernetes.io/managed-by label
+    values:
+      - ../test-values/minimal.values.yaml
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/managed-by"]
+          value: Helm
+
+  - it: renders commit label when global.commit is set
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      global.commit: "abc1234"
+    asserts:
+      - equal:
+          path: metadata.labels.commit
+          value: "abc1234"
+
+  - it: omits commit label when global.commit is not set
+    values:
+      - ../test-values/minimal.values.yaml
+    asserts:
+      - notExists:
+          path: metadata.labels.commit
+
+  - it: merges custom labels into deployment metadata
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      labels.team: platform
+      labels.version: v2
+    asserts:
+      - equal:
+          path: metadata.labels.team
+          value: platform
+      - equal:
+          path: metadata.labels.version
+          value: v2

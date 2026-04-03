@@ -1,0 +1,27 @@
+global:
+  region: us-east-1
+  ignoreLookup: "true"
+
+port: 8080
+replicas: 1
+resources:
+  cpu: 100m
+  memory: 256Mi
+image:
+  url: myapp
+
+deployment:
+  enabled: true
+service:
+  enabled: false
+configMap:
+  enabled: false
+cronJob:
+  enabled: false
+hpa:
+  enabled: false
+
+topologySpreadConstraints:
+  - maxSkew: 2
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule

@@ -34,14 +34,9 @@ tests:
           value: "@hourly"
 
   - it: defaults concurrencyPolicy to Forbid when not set
+    values:
+      - ../test-values/minimal.values.yaml
     set:
-      global.region: us-east-1
-      global.ignoreLookup: "true"
-      port: 5000
-      replicas: 1
-      resources.cpu: 250m
-      resources.memory: 512Mi
-      image.url: myapp
       cronJob.enabled: true
       cronJob.schedule: "0 * * * *"
       # no concurrencyPolicy set

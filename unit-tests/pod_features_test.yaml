@@ -1,0 +1,148 @@
+suite: pod-level features — initContainers, sidecars, probes, annotations, topology, serviceAccount, terminationGracePeriodSeconds, revisionHistoryLimit
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: renders initContainer
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: db-migration
+
+  - it: renders sidecar as second container
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: log-shipper
+
+  - it: renders readiness probe
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /health
+
+  - it: renders liveness probe with configured thresholds
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 1
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 15
+
+  - it: renders startup probe
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].startupProbe
+
+  - it: defaults serviceAccount to default
+    values:
+      - ../test-values/minimal.values.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: default
+
+  - it: uses configured serviceAccount
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      serviceAccount: my-service-account
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: my-service-account
+
+  - it: defaults terminationGracePeriodSeconds to 30
+    values:
+      - ../test-values/minimal.values.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 30
+
+  - it: uses configured terminationGracePeriodSeconds
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      terminationGracePeriodSeconds: 60
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 60
+
+  - it: defaults revisionHistoryLimit to 1
+    values:
+      - ../test-values/minimal.values.yaml
+    asserts:
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 1
+
+  - it: uses configured revisionHistoryLimit
+    values:
+      - ../test-values/common.values.yaml
+      - ../test-values/prod.values.yaml
+    set:
+      deployment.enabled: true
+    # prod.values.yaml: revisionHistoryLimit: 3
+    asserts:
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 3
+
+  - it: renders default topology spread constraints when not configured
+    values:
+      - ../test-values/minimal.values.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.topologySpreadConstraints
+          content:
+            maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: templates
+                helm.sh/chart: templates-0.1.0
+                app.kubernetes.io/managed-by: Helm
+      - contains:
+          path: spec.template.spec.topologySpreadConstraints
+          content:
+            maxSkew: 1
+            topologyKey: topology.kubernetes.io/zone
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: templates
+                helm.sh/chart: templates-0.1.0
+                app.kubernetes.io/managed-by: Helm
+
+  - it: omits topologySpreadConstraints when set to empty list
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      topologySpreadConstraints: []
+    asserts:
+      - notExists:
+          path: spec.template.spec.topologySpreadConstraints
+
+  - it: renders custom topology spread constraint
+    values:
+      - ../test-values/custom-topology.values.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].maxSkew
+          value: 2
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].whenUnsatisfiable
+          value: DoNotSchedule
