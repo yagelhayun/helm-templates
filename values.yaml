@@ -1,0 +1,11 @@
+# Spread pods across nodes and zones so the workload survives a node or
+# AZ failure. ScheduleAnyway is a soft constraint — scheduling is never
+# blocked on clusters that are too small or single-zone.
+# Set to [] to disable topology spreading entirely.
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: ScheduleAnyway
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway

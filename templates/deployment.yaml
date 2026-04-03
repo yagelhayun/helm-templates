@@ -19,7 +19,7 @@ spec:
   selector:
     matchLabels: {{ include "core.common.labels" $context | nindent 6 }}
   revisionHistoryLimit: {{ ternary 1 (int $config.revisionHistoryLimit) (kindIs "invalid" $config.revisionHistoryLimit) }}
-  strategy: {{ include "core.common.strategy.rollingUpdate" $context | nindent 4 }}
+  strategy: {{ include "core.common.strategy" $context | nindent 4 }}
   template:
     metadata:
       labels: {{ include "core.common.labels" $context | nindent 8 }}
@@ -38,7 +38,9 @@ spec:
       initContainers: {{ . | indent 6 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ ternary 30 (int $config.terminationGracePeriodSeconds) (kindIs "invalid" $config.terminationGracePeriodSeconds) }}
-      topologySpreadConstraints: {{ include "core.pod.topologySpreadConstraints" $context | nindent 6 }}
+      {{- with (include "core.pod.topologySpreadConstraints" $context) }}
+      topologySpreadConstraints: {{ . | indent 6 }}
+      {{- end }}
       containers: 
         {{- include "core.container.render" $context | indent 8 }}
         {{- with (include "core.container.sidecars" $context) }}

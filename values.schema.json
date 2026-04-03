@@ -35,6 +35,8 @@
     "labels":                       { "type": "object" },
     "annotations":                  { "type": "object" },
     "regions":                      { "type": "object" },
+    "strategy":                     { "$ref": "#/definitions/strategyConfig" },
+    "topologySpreadConstraints":    { "$ref": "#/definitions/topologySpreadConstraintsConfig" },
 
     "configMap": {
       "type": "object",
@@ -266,6 +268,30 @@
       },
       "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
       "then": { "required": ["maxReplicas"] }
+    },
+
+    "strategyConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type":           { "type": "string", "enum": ["RollingUpdate", "Recreate"] },
+        "maxUnavailable": { "type": ["string", "integer"] },
+        "maxSurge":       { "type": ["string", "integer"] }
+      }
+    },
+
+    "topologySpreadConstraintsConfig": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["maxSkew", "topologyKey", "whenUnsatisfiable"],
+        "properties": {
+          "maxSkew":           { "type": "integer", "minimum": 1 },
+          "topologyKey":       { "type": "string" },
+          "whenUnsatisfiable": { "type": "string", "enum": ["DoNotSchedule", "ScheduleAnyway"] }
+        }
+      }
     },
 
     "hpaMetric": {
