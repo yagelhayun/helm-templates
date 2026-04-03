@@ -1,50 +1,41 @@
-name: CI
+name: Test Helm Templates
 
 on:
   push:
-  pull_request:
+    branches:
+      - '**'
+    tags-ignore:
+      - '**'
+  workflow_call:
 
 jobs:
   lint-and-template:
     name: Lint and Template
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout helm-templates
-        uses: actions/checkout@v4
-        with:
-          path: helm-templates
-
-      # helm-templates depends on helm-core via file://../helm-core,
-      # so we check it out as a sibling directory to match local structure.
-      - name: Checkout helm-core
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository_owner }}/helm-core
-          path: helm-core
-
+      - uses: actions/checkout@v4
       - uses: azure/setup-helm@v4
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build dependencies
         run: helm dependency build
-        working-directory: helm-templates
 
       - name: Lint (validates chart structure and JSON schema)
         run: >-
           helm lint .
           -f test-values/common.values.yaml
           -f test-values/prod.values.yaml
-        working-directory: helm-templates
 
       - name: Template (renders all manifests against test values)
         run: >-
           helm template my-service .
           -f test-values/common.values.yaml
           -f test-values/prod.values.yaml
-        working-directory: helm-templates
 
       - name: Install helm-unittest
         run: helm plugin install https://github.com/helm-unittest/helm-unittest --verify=false
 
       - name: Run unit tests
         run: helm unittest -f 'unit-tests/*_test.yaml' .
-        working-directory: helm-templates

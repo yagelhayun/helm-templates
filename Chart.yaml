@@ -5,5 +5,5 @@ type: application
 version: 0.1.0
 dependencies:
   - name: core
-    version: x.x.x
-    repository: "file://../helm-core"
+    version: "0.1.0"
+    repository: "oci://ghcr.io/yagelhayun/helm-charts"
