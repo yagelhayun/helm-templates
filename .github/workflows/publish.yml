@@ -24,6 +24,9 @@ jobs:
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Pull dependencies
+        run: helm dependency update
+      
       - name: Package chart
         run: helm package .
 
