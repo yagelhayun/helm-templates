@@ -218,7 +218,8 @@ deployment:
   enabled: true
 
 portName: http                      # named port on container and service (default: "http")
-serviceAccount: my-sa               # default: "default"
+serviceAccount: 
+  name: my-sa                       # default: "default"
 terminationGracePeriodSeconds: 60   # default: 30
 revisionHistoryLimit: 3             # default: 1
 labels:                             # extra labels on Deployment and pod

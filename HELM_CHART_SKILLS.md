@@ -131,7 +131,8 @@ portName: http                   # names the port; used for service targetPort t
 replicas: 3
 revisionHistoryLimit: 5
 terminationGracePeriodSeconds: 60
-serviceAccount: my-service-sa
+serviceAccount: 
+  name: my-service-sa
 
 image:
   url: myrepo/my-service

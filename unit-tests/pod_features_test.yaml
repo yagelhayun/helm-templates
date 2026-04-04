@@ -56,7 +56,8 @@ tests:
     values:
       - ../test-values/minimal.values.yaml
     set:
-      serviceAccount: my-service-account
+      serviceAccount: 
+        name: my-service-account
     asserts:
       - equal:
           path: spec.template.spec.serviceAccountName
@@ -111,8 +112,6 @@ tests:
             labelSelector:
               matchLabels:
                 app.kubernetes.io/name: templates
-                helm.sh/chart: templates-0.1.0
-                app.kubernetes.io/managed-by: Helm
       - contains:
           path: spec.template.spec.topologySpreadConstraints
           content:
@@ -122,8 +121,6 @@ tests:
             labelSelector:
               matchLabels:
                 app.kubernetes.io/name: templates
-                helm.sh/chart: templates-0.1.0
-                app.kubernetes.io/managed-by: Helm
 
   - it: omits topologySpreadConstraints when set to empty list
     values:

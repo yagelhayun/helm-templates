@@ -6,7 +6,7 @@ apiVersion: apps/v1
 metadata:
   name: {{ include "core.statefulset.name" $context }}
   labels:
-    {{- include "core.statefulset.labels" $context | nindent 4 }}
+    {{- include "core.workload.labels" $context | nindent 4 }}
     {{- with $config.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -15,33 +15,33 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  replicas: {{ include "core.common.replicas" $context }}
+  replicas: {{ include "core.workload.replicas" $context }}
   selector:
-    matchLabels: {{ include "core.common.labels" $context | nindent 6 }}
+    matchLabels: {{ include "core.general.selectorLabels" $context | nindent 6 }}
   serviceName: {{ $config.statefulSet.serviceName }}
   podManagementPolicy: {{ ($config.statefulSet).podManagementPolicy | default "OrderedReady" }}
-  updateStrategy: {{ include "core.common.strategy" $context | nindent 4 }}
+  updateStrategy: {{ include "core.workload.strategy" $context | nindent 4 }}
   revisionHistoryLimit: {{ ternary 1 (int $config.revisionHistoryLimit) (kindIs "invalid" $config.revisionHistoryLimit) }}
   template:
     metadata:
-      labels: {{ include "core.common.labels" $context | nindent 8 }}
+      labels: {{ include "core.general.selectorLabels" $context | nindent 8 }}
       {{- with (include "core.pod.annotations" $context) }}
       annotations: {{ . | indent 8 }}
       {{- end }}
     spec:
-      serviceAccountName: {{ $config.serviceAccount | default "default" }}
+      serviceAccountName: {{ include "core.pod.serviceaccount" $context }}
       {{- with (include "core.pod.imagePullSecrets" $context) }}
-      imagePullSecrets: {{ . | indent 6 }}
+      imagePullSecrets: {{ . | indent 8 }}
       {{- end }}
       {{- with (include "core.pod.volumes" $context) }}
-      volumes: {{ . | indent 6 }}
+      volumes: {{ . | indent 8 }}
       {{- end }}
       {{- with (include "core.pod.initContainers" $context) }}
-      initContainers: {{ . | indent 6 }}
+      initContainers: {{ . | indent 8 }}
       {{- end }}
       terminationGracePeriodSeconds: {{ ternary 30 (int $config.terminationGracePeriodSeconds) (kindIs "invalid" $config.terminationGracePeriodSeconds) }}
       {{- with (include "core.pod.topologySpreadConstraints" $context) }}
-      topologySpreadConstraints: {{ . | indent 6 }}
+      topologySpreadConstraints: {{ . | indent 8 }}
       {{- end }}
       containers:
         {{- include "core.container.render" $context | indent 8 }}

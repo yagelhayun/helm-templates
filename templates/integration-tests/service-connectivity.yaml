@@ -5,7 +5,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: "{{ include "core.service.name" $context }}-test-connectivity"
-  labels: {{ include "core.common.labels" $context | nindent 4 }}
+  labels: {{ include "core.general.labels" $context | nindent 4 }}
   annotations:
     "helm.sh/hook": test
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
