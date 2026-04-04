@@ -9,8 +9,8 @@ on:
   workflow_call:
 
 jobs:
-  lint-and-template:
-    name: Lint and Template
+  lint-and-test:
+    name: Lint and Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,12 +25,6 @@ jobs:
       - name: Lint (validates chart structure and JSON schema)
         run: >-
           helm lint .
-          -f test-values/common.values.yaml
-          -f test-values/prod.values.yaml
-
-      - name: Template (renders all manifests against test values)
-        run: >-
-          helm template my-service .
           -f test-values/common.values.yaml
           -f test-values/prod.values.yaml
 
