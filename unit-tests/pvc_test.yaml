@@ -1,0 +1,131 @@
+suite: PersistentVolumeClaim rendering and pod volume mounting
+tests:
+  - it: renders a PVC with required fields
+    templates:
+      - templates/pvc.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      persistentVolumeClaims.my-data.size: 10Gi
+    asserts:
+      - isKind:
+          of: PersistentVolumeClaim
+
+  - it: uses configured storage size
+    templates:
+      - templates/pvc.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      persistentVolumeClaims.my-data.size: 10Gi
+    asserts:
+      - equal:
+          path: spec.resources.requests.storage
+          value: 10Gi
+
+  - it: defaults accessMode to ReadWriteOnce
+    templates:
+      - templates/pvc.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      persistentVolumeClaims.my-data.size: 10Gi
+    asserts:
+      - contains:
+          path: spec.accessModes
+          content: ReadWriteOnce
+
+  - it: uses configured accessMode
+    templates:
+      - templates/pvc.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      persistentVolumeClaims.my-data.size: 10Gi
+      persistentVolumeClaims.my-data.accessMode: ReadWriteMany
+    asserts:
+      - contains:
+          path: spec.accessModes
+          content: ReadWriteMany
+
+  - it: includes storageClass when configured
+    templates:
+      - templates/pvc.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      persistentVolumeClaims.my-data.size: 10Gi
+      persistentVolumeClaims.my-data.storageClass: fast-ssd
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: fast-ssd
+
+  - it: omits storageClass when not configured
+    templates:
+      - templates/pvc.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      persistentVolumeClaims.my-data.size: 10Gi
+    asserts:
+      - notExists:
+          path: spec.storageClassName
+
+  - it: renders no documents when persistentVolumeClaims is not set
+    templates:
+      - templates/pvc.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: pod spec includes persistentVolumeClaim volume
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      global.ignoreLookup: "true"
+      volumes.persistentVolumeClaims.my-data.mountPath: /data
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: my-data
+            persistentVolumeClaim:
+              claimName: my-data
+
+  - it: pod spec includes readOnly persistentVolumeClaim volume
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      global.ignoreLookup: "true"
+      volumes.persistentVolumeClaims.my-data.mountPath: /data
+      volumes.persistentVolumeClaims.my-data.readOnly: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: my-data
+            persistentVolumeClaim:
+              claimName: my-data
+              readOnly: true
+
+  - it: pod spec includes volumeMount for persistentVolumeClaim
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      global.ignoreLookup: "true"
+      volumes.persistentVolumeClaims.my-data.mountPath: /data
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: my-data
+            mountPath: /data

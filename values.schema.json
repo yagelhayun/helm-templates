@@ -28,7 +28,10 @@
     "serviceAccount": {
       "type": "object",
       "additionalProperties": false,
-      "properties": { "name": { "type": "string" } }
+      "properties": {
+        "name":   { "type": "string" },
+        "create": { "type": "boolean" }
+      }
     },
     "terminationGracePeriodSeconds":{ "type": "integer", "minimum": 0 },
     "resources":                    { "$ref": "#/definitions/resourcesConfig" },
@@ -66,6 +69,11 @@
       "properties": { "enabled": { "type": "boolean" } }
     },
 
+    "pdb": { "$ref": "#/definitions/pdbConfig" },
+    "persistentVolumeClaims": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/pvcConfig" }
+    },
     "cronJob":        { "$ref": "#/definitions/cronJobConfig" },
     "hpa":            { "$ref": "#/definitions/hpaConfig" },
     "initContainers": { "type": "array", "items": { "$ref": "#/definitions/containerSpec" } },
@@ -169,9 +177,49 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "secrets":    { "type": "object", "additionalProperties": { "$ref": "#/definitions/volumeMount" } },
-        "configMaps": { "type": "object", "additionalProperties": { "$ref": "#/definitions/volumeMount" } },
-        "empty":      { "type": "object", "additionalProperties": { "$ref": "#/definitions/emptyVolumeMount" } }
+        "secrets":                 { "type": "object", "additionalProperties": { "$ref": "#/definitions/volumeMount" } },
+        "configMaps":              { "type": "object", "additionalProperties": { "$ref": "#/definitions/volumeMount" } },
+        "empty":                   { "type": "object", "additionalProperties": { "$ref": "#/definitions/emptyVolumeMount" } },
+        "persistentVolumeClaims":  { "type": "object", "additionalProperties": { "$ref": "#/definitions/pvcVolumeMount" } }
+      }
+    },
+
+    "pvcVolumeMount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mountPath"],
+      "properties": {
+        "mountPath": { "type": "string" },
+        "readOnly":  { "type": "boolean" }
+      }
+    },
+
+    "pvcConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["size"],
+      "properties": {
+        "size":         { "type": "string" },
+        "storageClass": { "type": "string" },
+        "accessMode":   { "type": "string", "enum": ["ReadWriteOnce", "ReadWriteMany", "ReadOnlyMany"] }
+      }
+    },
+
+    "pdbConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled"],
+      "properties": {
+        "enabled":        { "type": "boolean" },
+        "minAvailable":   { "type": ["integer", "string"] },
+        "maxUnavailable": { "type": ["integer", "string"] }
+      },
+      "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+      "then": {
+        "anyOf": [
+          { "required": ["minAvailable"] },
+          { "required": ["maxUnavailable"] }
+        ]
       }
     },
 

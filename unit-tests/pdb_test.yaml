@@ -1,0 +1,72 @@
+suite: PodDisruptionBudget opt-in and configuration
+templates:
+  - templates/pdb.yaml
+tests:
+  - it: renders PodDisruptionBudget when enabled is true
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      pdb.enabled: true
+      pdb.maxUnavailable: 1
+    asserts:
+      - isKind:
+          of: PodDisruptionBudget
+
+  - it: uses maxUnavailable when configured
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      pdb.enabled: true
+      pdb.maxUnavailable: 1
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+      - notExists:
+          path: spec.minAvailable
+
+  - it: uses minAvailable when configured
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      pdb.enabled: true
+      pdb.minAvailable: 2
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 2
+      - notExists:
+          path: spec.maxUnavailable
+
+  - it: prefers minAvailable over maxUnavailable when both are set
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      pdb.enabled: true
+      pdb.minAvailable: 1
+      pdb.maxUnavailable: 1
+    asserts:
+      - exists:
+          path: spec.minAvailable
+      - notExists:
+          path: spec.maxUnavailable
+
+  - it: selector uses selectorLabels only (no helm.sh/chart)
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      pdb.enabled: true
+      pdb.maxUnavailable: 1
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/name"]
+          value: templates
+      - notExists:
+          path: spec.selector.matchLabels["helm.sh/chart"]
+
+  - it: does not render PodDisruptionBudget when disabled
+    values:
+      - ../test-values/minimal.values.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

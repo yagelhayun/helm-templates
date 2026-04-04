@@ -1,0 +1,23 @@
+{{- $config := include "core.general.config" . | fromYaml }}
+{{- $context := merge (dict "$" $) $config }}
+{{- range $name, $params := $context.persistentVolumeClaims }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ $name }}
+  labels: {{ include "core.general.labels" $context | nindent 4 }}
+  {{- with ($context.annotations).persistentVolumeClaim }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with $params.storageClass }}
+  storageClassName: {{ . }}
+  {{- end }}
+  accessModes:
+    - {{ $params.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ $params.size }}
+---
+{{- end }}

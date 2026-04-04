@@ -56,8 +56,7 @@ tests:
     values:
       - ../test-values/minimal.values.yaml
     set:
-      serviceAccount: 
-        name: my-service-account
+      serviceAccount.name: my-service-account
     asserts:
       - equal:
           path: spec.template.spec.serviceAccountName

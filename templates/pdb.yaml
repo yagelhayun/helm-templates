@@ -1,0 +1,27 @@
+{{- if (.Values.pdb).enabled }}
+{{- $config := include "core.general.config" . | fromYaml }}
+{{- $context := merge (dict "$" $) $config }}
+kind: PodDisruptionBudget
+apiVersion: policy/v1
+metadata:
+  name: {{ include "core.pdb.name" $context }}
+  labels:
+    {{- include "core.general.labels" $context | nindent 4 }}
+    {{- with $config.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with ($config.annotations).pdb }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if not (kindIs "invalid" ($context.pdb).minAvailable) }}
+  minAvailable: {{ $context.pdb.minAvailable }}
+  {{- else }}
+  {{- with ($context.pdb).maxUnavailable }}
+  maxUnavailable: {{ . }}
+  {{- end }}
+  {{- end }}
+  selector:
+    matchLabels: {{ include "core.general.selectorLabels" $context | nindent 6 }}
+{{- end }}
