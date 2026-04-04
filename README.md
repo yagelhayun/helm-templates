@@ -1,6 +1,6 @@
-# Helm Templates
+# Helm Templates — User Guide
 
-A ready-to-use application Helm chart that wraps `helm-core`. It generates Kubernetes resources from a structured `values.yaml` without writing any templates.
+A ready-to-use application Helm chart that generates Kubernetes resources from a structured `values.yaml` — no template writing required.
 
 ---
 
@@ -12,52 +12,73 @@ helm template my-service . -f values.yaml
 helm install my-service . -f values.yaml
 ```
 
-For testing without a cluster, add `global.ignoreLookup: "true"` to your values.
+For rendering without a cluster (CI, local), add `global.ignoreLookup: "true"` to your values.
+
+---
+
+## Workload types
+
+Select the workload kind with `workload.type`. Exactly one workload resource is rendered per release.
+
+| Type | Notes |
+|------|-------|
+| `Deployment` | Stateless services (default) |
+| `StatefulSet` | Requires `statefulSet.serviceName` |
+| `DaemonSet` | `replicas` not required |
 
 ---
 
 ## Resources
 
-Each resource is **opt-in** via an `enabled` flag. Resources with `enabled: false` produce no output.
+All resources except the workload are opt-in and produce no output when disabled.
 
-| Resource | Key | Notes |
-|----------|-----|-------|
-| ConfigMap | `configMap.enabled` | Chart's own config, auto-mounted as envFrom |
-| Deployment | `deployment.enabled` | Main workload |
-| Service | `service.enabled` | ClusterIP, targets the main port |
-| CronJob | `cronJob.enabled` | Shares all env/volume config with deployment |
-| HPA | `hpa.enabled` | Disabled automatically when `activeRegion` is set |
+| Resource | Enabled by |
+|----------|------------|
+| Deployment / StatefulSet / DaemonSet | `workload.type` |
+| ConfigMap | `configMap.enabled: true` |
+| Service | `service.enabled: true` |
+| CronJob | `cronJob.enabled: true` |
+| HPA | `hpa.enabled: true` |
+| PDB | `pdb.enabled: true` |
+| PersistentVolumeClaims | `persistentVolumeClaims.*` (one PVC per entry) |
+| ServiceAccount | `serviceAccount.create: true` |
 
 ---
 
-## Full values reference
-
-### Required
+## Required values
 
 ```yaml
 global:
-  region: us-east-1   # must match a key in regions (or be the only region)
+  region: us-east-1
 
-port: 8080            # main container and service port
-replicas: 2           # desired replica count
+port: 8080
+replicas: 2           # not required for DaemonSet
+
 resources:
   cpu: 250m
   memory: 512Mi
+
+workload:
+  type: Deployment
 ```
+
+---
+
+## Values reference
 
 ### Global scope
 
-Values under `global` are merged into every chart in an umbrella. Local values take priority over global ones.
+Shared across all sub-charts in an umbrella. Local values take priority.
 
 ```yaml
 global:
-  region: us-east-1          # required
-  ignoreLookup: "true"       # set to bypass cluster lookups (CI / local rendering)
-  commit: "abc123"           # optional — adds a 'commit' label to deployments
+  region: us-east-1            # required
+  ignoreLookup: "true"         # bypass cluster lookups (CI / local rendering)
+  commit: "abc123"             # optional — adds a commit label to workloads
   image:
     url: myrepo/base
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: IfNotPresent   # Always | IfNotPresent | Never
     pullSecrets:
       - registry-credentials
   envFrom:
@@ -82,16 +103,16 @@ global:
 
 ```yaml
 image:
-  url: myrepo/myapp       # required if global.image.url not set
-  tag: "1.2.3"            # default: "latest"
-  pullPolicy: IfNotPresent # Always | IfNotPresent | Never
+  url: myrepo/myapp         # required if global.image.url not set
+  tag: "1.2.3"              # default: "latest"
+  pullPolicy: IfNotPresent
   pullSecrets:
     - my-registry-secret
 ```
 
 ### Regions
 
-Override any value for a specific region. The active region is determined by `global.region`.
+Override any value for a specific region. Active region is determined by `global.region`.
 
 ```yaml
 regions:
@@ -107,20 +128,20 @@ regions:
 
 ### Active region (blue/green)
 
-Set `activeRegion` to deploy with 0 replicas in all other regions. The Deployment still exists (preserving rollback history) but runs nothing.
-
 ```yaml
-activeRegion: us-east-1   # only this region gets replicas > 0
+activeRegion: us-east-1   # other regions get 0 replicas; workload still exists for rollback
 replicas: 3
 ```
+
+Mutually exclusive with `hpa.enabled`.
 
 ### Resources
 
 ```yaml
 resources:
-  cpu: 250m          # request (e.g. 250m, 1, 1.5)
-  memory: 512Mi      # request and limit
-  limitMultiplier: 4 # CPU limit = request × multiplier (default: 4)
+  cpu: 250m           # request; limit = request × limitMultiplier
+  memory: 512Mi       # request and limit
+  limitMultiplier: 4  # default: 4, minimum: 1
 ```
 
 ### Volumes
@@ -130,37 +151,32 @@ volumes:
   secrets:
     my-secret:
       mountPath: /run/secrets
-      defaultMode: 420      # optional, default 0644
-      files:                # optional: mount specific keys as files
+      defaultMode: 420          # optional, default 420 (0644)
+      files:                    # optional: mount individual keys as files
         - tls.crt
-        - tls.key
   configMaps:
     my-config:
       mountPath: /etc/config
   empty:
     scratch:
-      mountPath: /tmp/scratch  # optional for emptyDir
+      mountPath: /tmp/scratch
+  persistentVolumeClaims:
+    my-pvc:
+      mountPath: /data
+      readOnly: false
 ```
 
-### Environment — envFrom (bulk)
-
-Injects all keys from a ConfigMap or Secret as environment variables.
+### Environment
 
 ```yaml
+# Bulk — injects all keys from a ConfigMap or Secret
 envFrom:
   configMaps:
     shared-config: {}
   secrets:
     my-secret: {}
-```
 
-The chart's own ConfigMap (if `configMap.enabled: true`) is always appended automatically.
-
-### Environment — env (individual keys)
-
-Maps specific keys to named environment variables. Keys are validated against the cluster during real deployments.
-
-```yaml
+# Individual keys — validated against the cluster during real deployments
 env:
   secrets:
     my-secret:
@@ -172,6 +188,8 @@ env:
         variable: LOG_LEVEL
 ```
 
+The chart's own ConfigMap is always appended to `envFrom` automatically when `configMap.enabled: true`.
+
 ### ConfigMap
 
 ```yaml
@@ -179,28 +197,22 @@ configMap:
   enabled: true
   data:
     LOG_LEVEL: info
-    MAX_CONNECTIONS: "100"
-    # Go template expressions are supported:
-    PORT: "{{ .Values.port }}"
+    PORT: "{{ .Values.port }}"   # Go template expressions supported
 ```
 
-Required when `enabled: true`. Supports region overrides via `regions.<region>.configMap.data`.
+`configMap.data` is required when `configMap.enabled: true`.
 
 ### Probes
 
-Each probe must have either `httpGet` or `exec`, not both.
+Each probe must have exactly one of `httpGet` or `exec`.
 
 ```yaml
 probes:
   readiness:
     httpGet:
       path: /health/ready
-      scheme: HTTP        # optional, default HTTP
-    failureThreshold: 3   # default 3
     initialDelaySeconds: 40
     periodSeconds: 30
-    successThreshold: 1
-    timeoutSeconds: 20
   liveness:
     httpGet:
       path: /health/live
@@ -211,26 +223,14 @@ probes:
     periodSeconds: 10
 ```
 
-### Deployment options
+### Strategy
 
 ```yaml
-deployment:
-  enabled: true
-
-portName: http                      # named port on container and service (default: "http")
-serviceAccount: 
-  name: my-sa                       # default: "default"
-terminationGracePeriodSeconds: 60   # default: 30
-revisionHistoryLimit: 3             # default: 1
-labels:                             # extra labels on Deployment and pod
-  team: platform
-annotations:
-  deployment:
-    my-annotation: value
-  configMap:
-    my-annotation: value
-  service:
-    my-annotation: value
+strategy:
+  type: RollingUpdate     # default; or Recreate / OnDelete
+  maxUnavailable: "25%"   # default
+  maxSurge: "25%"         # default (Deployment only)
+  partition: 2            # StatefulSet canary rollouts (replaces maxUnavailable/maxSurge)
 ```
 
 ### Service
@@ -238,7 +238,15 @@ annotations:
 ```yaml
 service:
   enabled: true
-# port and portName are shared with the deployment
+# port and portName are shared with the workload container
+```
+
+### PDB
+
+```yaml
+pdb:
+  enabled: true
+  minAvailable: 1       # use minAvailable or maxUnavailable, not both
 ```
 
 ### CronJob
@@ -247,22 +255,24 @@ service:
 cronJob:
   enabled: true
   schedule: "0 * * * *"         # required when enabled
-  concurrencyPolicy: Forbid     # Allow | Forbid | Replace (default: Forbid)
-  successfulJobsHistory: 3      # default: 3
-  failedJobsHistory: 1          # default: 1
+  concurrencyPolicy: Forbid      # Allow | Forbid | Replace (default: Forbid)
+  successfulJobsHistory: 3       # default: 3
+  failedJobsHistory: 1           # default: 1
   entrypoint:
     command: ["/bin/sh"]
     args: ["-c", "echo hello"]
 ```
 
-The CronJob shares `envFrom`, `env`, `volumes`, `resources`, `initContainers`, and `image` with the Deployment.
+Shares `envFrom`, `env`, `volumes`, `resources`, `initContainers`, and `image` with the workload.
 
 ### HPA
+
+Cannot be combined with `activeRegion`.
 
 ```yaml
 hpa:
   enabled: true
-  maxReplicas: 10    # required when enabled; minReplicas comes from root `replicas`
+  maxReplicas: 10    # required when enabled; minReplicas comes from root replicas
   resources:
     cpu:
       averageUtilization: 70
@@ -270,9 +280,35 @@ hpa:
       averageUtilization: 80
 ```
 
-The HPA is suppressed automatically when `activeRegion` is set (region-based scaling and HPA are mutually exclusive).
+### StatefulSet
 
-### Init containers
+```yaml
+workload:
+  type: StatefulSet
+
+statefulSet:
+  serviceName: my-headless-svc       # required
+  podManagementPolicy: OrderedReady  # OrderedReady | Parallel
+  volumeClaimTemplates:
+    - name: data
+      size: 10Gi
+      storageClass: fast
+      accessMode: ReadWriteOnce      # default
+```
+
+### PersistentVolumeClaims
+
+Standalone PVCs — one per entry, not per pod replica.
+
+```yaml
+persistentVolumeClaims:
+  shared-storage:
+    size: 50Gi
+    storageClass: standard
+    accessMode: ReadWriteMany
+```
+
+### Init containers and sidecars
 
 ```yaml
 initContainers:
@@ -285,103 +321,137 @@ initContainers:
     resources:
       cpu: 100m
       memory: 128Mi
-    envFrom:
-      secrets:
-        db-credentials: {}
-```
 
-Init containers share the pod's volumes. Declare any volumes they need in the root `volumes` config.
-
-### Sidecars
-
-```yaml
 sidecars:
   - name: log-shipper
     image:
       url: fluent/fluent-bit
       tag: "3.0"
-    port: 2020
-    portName: metrics
     resources:
       cpu: 50m
       memory: 64Mi
-    volumes:
-      empty:
-        log-buffer:
-          mountPath: /var/log/buffer
 ```
 
-### Full example
+Both share the pod's volumes.
 
+### ServiceAccount
+
+```yaml
+serviceAccount:
+  create: true
+  name: my-sa    # optional; defaults to chart name
+```
+
+### Miscellaneous
+
+```yaml
+portName: http                      # named port on container and service (default: "http")
+revisionHistoryLimit: 1             # default: 1
+terminationGracePeriodSeconds: 30   # default: 30
+
+labels:                             # extra labels on workload and pod
+  team: platform
+
+annotations:                        # per-resource annotation blocks
+  deployment:
+    my-annotation: value
+  configMap:
+    my-annotation: value
+  service:
+    my-annotation: value
+  cronJob:
+    my-annotation: value
+
+topologySpreadConstraints: []       # defaults to hostname + zone spreading; set to [] to disable
+```
+
+---
+
+## Umbrella charts
+
+Depend on `helm-templates` multiple times using aliases — one per service. `global` values are shared automatically across all instances.
+
+**`Chart.yaml`**:
+```yaml
+dependencies:
+  - name: helm-templates
+    version: 0.3.0
+    repository: "oci://ghcr.io/yagelhayun/helm-charts"
+    alias: api
+  - name: helm-templates
+    version: 0.3.0
+    repository: "oci://ghcr.io/yagelhayun/helm-charts"
+    alias: worker
+```
+
+**`values.yaml`**:
 ```yaml
 global:
   region: us-east-1
+  image:
+    pullSecrets: [registry-credentials]
 
-port: 8080
-portName: http
-replicas: 2
-
-image:
-  url: myrepo/my-service
-  tag: "2.1.0"
-  pullSecrets:
-    - registry-credentials
-
-resources:
-  cpu: 500m
-  memory: 1Gi
-  limitMultiplier: 2
-
-deployment:
-  enabled: true
-
-service:
-  enabled: true
-
-configMap:
-  enabled: true
-  data:
-    LOG_LEVEL: info
-    FEATURE_FLAGS: "true"
-
-regions:
-  us-east-1:
-    configMap:
-      data:
-        API_ENDPOINT: "https://api.us-east-1.example.com"
-  us-west-1:
-    configMap:
-      data:
-        API_ENDPOINT: "https://api.us-west-1.example.com"
-
-probes:
-  readiness:
-    httpGet:
-      path: /health/ready
-  liveness:
-    httpGet:
-      path: /health/live
-
-hpa:
-  enabled: true
-  maxReplicas: 10
+api:
+  port: 8080
+  replicas: 2
+  image:
+    url: myrepo/api
+    tag: "1.0.0"
   resources:
-    cpu:
-      averageUtilization: 70
+    cpu: 500m
+    memory: 512Mi
+  workload:
+    type: Deployment
+  service:
+    enabled: true
+
+worker:
+  port: 9090
+  replicas: 5
+  image:
+    url: myrepo/worker
+    tag: "1.0.0"
+  resources:
+    cpu: 250m
+    memory: 256Mi
+  workload:
+    type: Deployment
+  service:
+    enabled: false
 ```
+
+Each alias becomes the chart name used for resource naming. Schema validation applies independently per sub-chart.
 
 ---
 
 ## Schema validation
 
-`values.schema.json` is validated by Helm before rendering. Unknown keys at any level are rejected. If you add a new top-level key and Helm rejects it, check the schema.
+`values.schema.json` is validated by Helm before rendering. Unknown keys at any level are rejected (`additionalProperties: false` throughout). If Helm rejects a value, check the schema for allowed keys.
 
 ---
 
-## Running tests
+## GitOps (ArgoCD / Flux)
+
+### Schema validation
+
+Works as normal — ArgoCD and Flux both invoke `helm template` before applying, so `values.schema.json` is validated every sync. Misconfigured values are caught before anything reaches the cluster.
+
+### Cluster lookups
+
+ArgoCD and Flux render charts via `helm template`, which causes `core.isRealDeployment` to return `false`. This means **cluster lookups are silently skipped** at render time — the library will not verify that referenced Secrets, ConfigMaps, or PVCs exist before the manifests are applied.
+
+The failure only surfaces later, when a pod can't start because a referenced resource is missing.
+
+### Mitigation options
+
+**CI validation with cluster credentials (recommended):** In your CI pipeline, run `helm template` with a read-only kubeconfig pointed at staging. With real cluster access, `core.isRealDeployment` activates and all lookups run, giving you the full failure behavior before merge.
 
 ```bash
-cd helm-templates
-helm dependency update
-helm template my-service . -f test/common.values.yaml -f test/prod.values.yaml
+helm template my-service . -f values.yaml --kube-context staging-readonly
 ```
+
+**ArgoCD server-side diff:** `argocd app diff` dry-applies rendered manifests against the Kubernetes API. This catches invalid resource specs but does not catch missing Secrets referenced in `envFrom` (Kubernetes only validates those at pod schedule time).
+
+**PreSync hook:** A Helm hook (`helm.sh/hook: pre-sync`) running a Job that checks for required Secrets/ConfigMaps before sync proceeds. Use this only if you have strict zero-downtime requirements — it adds complexity and a sync round-trip.
+
+**Accept the limitation:** Treat schema validation as your pre-flight gate and let ArgoCD's sync health (pod `CrashLoopBackOff` / `OOMKilled`) surface missing dependencies post-apply. Practical for teams with fast feedback loops and non-critical workloads.
