@@ -15,10 +15,75 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
+  type: {{ include "core.service.type" $context }}
+  {{- with ($config.service).clusterIP }}
+  clusterIP: {{ . }}
+  {{- end }}
+  {{- with ($config.service).ipFamily }}
+  {{- with .policy }}
+  ipFamilyPolicy: {{ . }}
+  {{- end }}
+  {{- with .families }}
+  ipFamilies:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- with ($config.service).externalName }}
+  externalName: {{ .host }}
+  {{- else }}
   ports:
   - name: {{ $config.portName | default "http" }}
     protocol: TCP
     port: {{ $config.port }}
     targetPort: {{ $config.portName | default "http" }}
+    {{- with ($config.service).appProtocol }}
+    appProtocol: {{ . }}
+    {{- end }}
+    {{- with ($config.service).nodePort }}
+    nodePort: {{ .port }}
+    {{- end }}
   selector: {{ include "core.general.selectorLabels" $context | nindent 4 }}
+  {{- end }}
+  {{- with ($config.service).sessionAffinity }}
+  sessionAffinity: {{ .type }}
+  {{- with .config }}
+  sessionAffinityConfig:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- if hasKey ($config.service) "publishNotReadyAddresses" }}
+  publishNotReadyAddresses: {{ ($config.service).publishNotReadyAddresses }}
+  {{- end }}
+  {{- with ($config.service).externalIPs }}
+  externalIPs:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with ($config.service).trafficPolicy }}
+  {{- with .internal }}
+  internalTrafficPolicy: {{ . }}
+  {{- end }}
+  {{- with .external }}
+  externalTrafficPolicy: {{ . }}
+  {{- end }}
+  {{- end }}
+  {{- with ($config.service).loadBalancer }}
+  {{- with .ip }}
+  loadBalancerIP: {{ . }}
+  {{- end }}
+  {{- with .sourceRanges }}
+  loadBalancerSourceRanges:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .class }}
+  loadBalancerClass: {{ . }}
+  {{- end }}
+  {{- with .nodePort }}
+  {{- if hasKey . "shouldAllocatePorts" }}
+  allocateLoadBalancerNodePorts: {{ .shouldAllocatePorts }}
+  {{- end }}
+  {{- with .healthCheckPort }}
+  healthCheckNodePort: {{ . }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
 {{- end }}

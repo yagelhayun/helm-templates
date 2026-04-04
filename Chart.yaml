@@ -1,9 +1,9 @@
 apiVersion: v2
 name: templates
-description: Opinionated application chart that wraps helm-core. Provides Deployment, Service, ConfigMap, CronJob, and HPA resources — configured entirely through values, no template authoring required.
+description: Opinionated application chart that wraps helm-core. Configured entirely through values, no template authoring required.
 type: application
-version: 0.3.0
+version: 0.3.1
 dependencies:
   - name: core
-    version: 0.3.0
+    version: 0.3.1
     repository: "oci://ghcr.io/yagelhayun/helm-charts"

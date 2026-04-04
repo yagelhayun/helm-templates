@@ -2,6 +2,9 @@ suite: service opt-in and configuration
 templates:
   - templates/service.yaml
 tests:
+
+  # ── Render guard ────────────────────────────────────────────────────────────
+
   - it: does not render when service.enabled is false
     values:
       - ../test-values/common.values.yaml
@@ -20,6 +23,8 @@ tests:
       - isKind:
           of: Service
 
+  # ── Ports ───────────────────────────────────────────────────────────────────
+
   - it: exposes the configured port
     values:
       - ../test-values/common.values.yaml
@@ -31,7 +36,6 @@ tests:
   - it: uses portName for the named port
     values:
       - ../test-values/common.values.yaml
-    # portName: api
     asserts:
       - equal:
           path: spec.ports[0].name
@@ -54,3 +58,522 @@ tests:
       - equal:
           path: spec.selector["app.kubernetes.io/name"]
           value: templates
+
+  # ── Default type ────────────────────────────────────────────────────────────
+
+  - it: defaults to ClusterIP when no type is set
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+
+  # ── NodePort ─────────────────────────────────────────────────────────────────
+
+  - it: renders NodePort type
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: NodePort
+    asserts:
+      - equal:
+          path: spec.type
+          value: NodePort
+
+  - it: renders nodePort on the port entry when configured
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: NodePort
+      service.nodePort.port: 30080
+    asserts:
+      - equal:
+          path: spec.ports[0].nodePort
+          value: 30080
+
+  - it: does not render nodePort field when not configured
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: NodePort
+    asserts:
+      - notExists:
+          path: spec.ports[0].nodePort
+
+  - it: schema rejects nodePort object without type NodePort
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.nodePort.port: 30080
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects nodePort object with type LoadBalancer
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+      service.nodePort.port: 30080
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects nodePort.port below 30000
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: NodePort
+      service.nodePort.port: 80
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects nodePort.port above 32767
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: NodePort
+      service.nodePort.port: 40000
+    asserts:
+      - failedTemplate: {}
+
+  # ── LoadBalancer ─────────────────────────────────────────────────────────────
+
+  - it: renders LoadBalancer type
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+
+  - it: renders loadBalancerIP when set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+      service.loadBalancer.ip: "1.2.3.4"
+    asserts:
+      - equal:
+          path: spec.loadBalancerIP
+          value: "1.2.3.4"
+
+  - it: renders loadBalancerSourceRanges when set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+      service.loadBalancer.sourceRanges[0]: "10.0.0.0/8"
+    asserts:
+      - equal:
+          path: spec.loadBalancerSourceRanges[0]
+          value: "10.0.0.0/8"
+
+  - it: renders loadBalancerClass when set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+      service.loadBalancer.class: "cloud.google.com/load-balancer-type"
+    asserts:
+      - equal:
+          path: spec.loadBalancerClass
+          value: "cloud.google.com/load-balancer-type"
+
+  - it: renders allocateLoadBalancerNodePorts as true
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+      service.loadBalancer.nodePort.shouldAllocatePorts: true
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: true
+
+  - it: renders allocateLoadBalancerNodePorts as false
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+      service.loadBalancer.nodePort.shouldAllocatePorts: false
+    asserts:
+      - equal:
+          path: spec.allocateLoadBalancerNodePorts
+          value: false
+
+  - it: does not render allocateLoadBalancerNodePorts when not set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+    asserts:
+      - notExists:
+          path: spec.allocateLoadBalancerNodePorts
+
+  - it: renders healthCheckNodePort when set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+      service.loadBalancer.nodePort.healthCheckPort: 31000
+    asserts:
+      - equal:
+          path: spec.healthCheckNodePort
+          value: 31000
+
+  - it: schema rejects loadBalancer object without type LoadBalancer
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.loadBalancer.ip: "1.2.3.4"
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects loadBalancer object with type NodePort
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: NodePort
+      service.loadBalancer.ip: "1.2.3.4"
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects healthCheckPort below 30000
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+      service.loadBalancer.nodePort.healthCheckPort: 1000
+    asserts:
+      - failedTemplate: {}
+
+  # ── ExternalName ─────────────────────────────────────────────────────────────
+
+  - it: renders ExternalName type with externalName host
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: ExternalName
+      service.externalName.host: "my.example.com"
+    asserts:
+      - equal:
+          path: spec.type
+          value: ExternalName
+      - equal:
+          path: spec.externalName
+          value: "my.example.com"
+
+  - it: does not render ports or selector for ExternalName
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: ExternalName
+      service.externalName.host: "my.example.com"
+    asserts:
+      - notExists:
+          path: spec.ports
+      - notExists:
+          path: spec.selector
+
+  - it: schema rejects externalName object without type ExternalName
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.externalName.host: "my.example.com"
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects externalName object with type LoadBalancer
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+      service.externalName.host: "my.example.com"
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects externalName.host as empty string
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: ExternalName
+      service.externalName.host: ""
+    asserts:
+      - failedTemplate: {}
+
+  # ── trafficPolicy ────────────────────────────────────────────────────────────
+
+  - it: renders internalTrafficPolicy when set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.trafficPolicy.internal: Local
+    asserts:
+      - equal:
+          path: spec.internalTrafficPolicy
+          value: Local
+
+  - it: renders externalTrafficPolicy when set on NodePort
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: NodePort
+      service.trafficPolicy.external: Local
+    asserts:
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Local
+
+  - it: renders externalTrafficPolicy when set on LoadBalancer
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: LoadBalancer
+      service.trafficPolicy.external: Cluster
+    asserts:
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Cluster
+
+  - it: renders both internal and external trafficPolicy together
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: NodePort
+      service.trafficPolicy.internal: Local
+      service.trafficPolicy.external: Local
+    asserts:
+      - equal:
+          path: spec.internalTrafficPolicy
+          value: Local
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Local
+
+  - it: schema rejects external trafficPolicy on ClusterIP
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.trafficPolicy.external: Local
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects external trafficPolicy on ExternalName
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: ExternalName
+      service.externalName.host: "my.example.com"
+      service.trafficPolicy.external: Local
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid trafficPolicy value
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: NodePort
+      service.trafficPolicy.external: Invalid
+    asserts:
+      - failedTemplate: {}
+
+  # ── sessionAffinity ──────────────────────────────────────────────────────────
+
+  - it: renders sessionAffinity type
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.sessionAffinity.type: ClientIP
+    asserts:
+      - equal:
+          path: spec.sessionAffinity
+          value: ClientIP
+
+  - it: renders sessionAffinityConfig when config is provided
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.sessionAffinity.type: ClientIP
+      service.sessionAffinity.config.clientIP.timeoutSeconds: 3600
+    asserts:
+      - equal:
+          path: spec.sessionAffinityConfig.clientIP.timeoutSeconds
+          value: 3600
+
+  - it: does not render sessionAffinityConfig when config is absent
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.sessionAffinity.type: ClientIP
+    asserts:
+      - notExists:
+          path: spec.sessionAffinityConfig
+
+  - it: schema rejects sessionAffinity config without type ClientIP
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.sessionAffinity.type: None
+      service.sessionAffinity.config.clientIP.timeoutSeconds: 3600
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects sessionAffinity config without any type set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.sessionAffinity.config.clientIP.timeoutSeconds: 3600
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects sessionAffinityConfig timeoutSeconds above 86400
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.sessionAffinity.type: ClientIP
+      service.sessionAffinity.config.clientIP.timeoutSeconds: 99999
+    asserts:
+      - failedTemplate: {}
+
+  # ── publishNotReadyAddresses ─────────────────────────────────────────────────
+
+  - it: renders publishNotReadyAddresses as true when set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.publishNotReadyAddresses: true
+    asserts:
+      - equal:
+          path: spec.publishNotReadyAddresses
+          value: true
+
+  - it: renders publishNotReadyAddresses as false when explicitly set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.publishNotReadyAddresses: false
+    asserts:
+      - equal:
+          path: spec.publishNotReadyAddresses
+          value: false
+
+  - it: does not render publishNotReadyAddresses when not set
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - notExists:
+          path: spec.publishNotReadyAddresses
+
+  # ── externalIPs ──────────────────────────────────────────────────────────────
+
+  - it: renders externalIPs when set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.externalIPs[0]: "1.2.3.4"
+    asserts:
+      - equal:
+          path: spec.externalIPs[0]
+          value: "1.2.3.4"
+
+  - it: does not render externalIPs when not set
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - notExists:
+          path: spec.externalIPs
+
+  # ── ipFamily ─────────────────────────────────────────────────────────────────
+
+  - it: renders ipFamilyPolicy when set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.ipFamily.policy: PreferDualStack
+    asserts:
+      - equal:
+          path: spec.ipFamilyPolicy
+          value: PreferDualStack
+
+  - it: renders ipFamilies when set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.ipFamily.families[0]: IPv4
+    asserts:
+      - equal:
+          path: spec.ipFamilies[0]
+          value: IPv4
+
+  - it: renders both policy and families together
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.ipFamily.policy: RequireDualStack
+      service.ipFamily.families[0]: IPv6
+    asserts:
+      - equal:
+          path: spec.ipFamilyPolicy
+          value: RequireDualStack
+      - equal:
+          path: spec.ipFamilies[0]
+          value: IPv6
+
+  - it: schema rejects invalid ipFamilyPolicy value
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.ipFamily.policy: DualStack
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid ipFamilies value
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.ipFamily.families[0]: IPv5
+    asserts:
+      - failedTemplate: {}
+
+  # ── clusterIP ────────────────────────────────────────────────────────────────
+
+  - it: renders clusterIP None for a headless service
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.clusterIP: None
+    asserts:
+      - equal:
+          path: spec.clusterIP
+          value: None
+
+  # ── appProtocol ──────────────────────────────────────────────────────────────
+
+  - it: renders appProtocol on the port when set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.appProtocol: kubernetes.io/h2c
+    asserts:
+      - equal:
+          path: spec.ports[0].appProtocol
+          value: kubernetes.io/h2c
+
+  - it: does not render appProtocol when not set
+    values:
+      - ../test-values/common.values.yaml
+    asserts:
+      - notExists:
+          path: spec.ports[0].appProtocol
+
+  # ── Schema — invalid type enum ───────────────────────────────────────────────
+
+  - it: schema rejects an unknown service type
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      service.type: Headless
+    asserts:
+      - failedTemplate: {}
