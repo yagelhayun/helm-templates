@@ -1,10 +1,13 @@
-# Spread pods across nodes and zones so the workload survives a node or
-# AZ failure. ScheduleAnyway is a soft constraint — scheduling is never
-# blocked on clusters that are too small or single-zone.
-# Set to [] to disable topology spreading entirely.
 revisionHistoryLimit: 1
 
 terminationGracePeriodSeconds: 30
+
+pdb:
+  enabled: false
+  maxUnavailable: 1
+
+hpa:
+  enabled: false
 
 # RollingUpdate is the default type. Set type: Recreate to terminate all pods
 # before starting new ones (required when ReadWriteOnce volumes are in use).
@@ -15,13 +18,10 @@ strategy:
   maxUnavailable: "25%"
   maxSurge: "25%"
 
-pdb:
-  enabled: false
-  maxUnavailable: 1
-
-hpa:
-  enabled: false
-
+# Spread pods across nodes and zones so the workload survives a node or
+# AZ failure. ScheduleAnyway is a soft constraint — scheduling is never
+# blocked on clusters that are too small or single-zone.
+# Set to [] to disable topology spreading entirely.
 topologySpreadConstraints:
   - maxSkew: 1
     topologyKey: kubernetes.io/hostname
