@@ -1,4 +1,5 @@
 .git*
-README.md
 test*
+README.md
+Taskfile.yml
 .helmignore
