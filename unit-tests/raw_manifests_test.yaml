@@ -1,0 +1,88 @@
+suite: rawManifests — raw Kubernetes manifest passthrough
+templates:
+  - templates/raw-manifests.yaml
+tests:
+
+  # ── Render guard ────────────────────────────────────────────────────────────
+
+  - it: renders no documents when rawManifests is not set
+    values:
+      - ../test-values/minimal.values.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # ── Rendering ───────────────────────────────────────────────────────────────
+
+  - it: renders one document per manifest entry
+    values:
+      - ../test-values/minimal.values.yaml
+      - ../test-values/raw-manifests.values.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: renders the correct kind for a plain manifest
+    values:
+      - ../test-values/minimal.values.yaml
+      - ../test-values/raw-manifests.values.yaml
+    asserts:
+      - isKind:
+          of: ServiceAccount
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: raw-sa
+        documentIndex: 0
+
+  - it: renders a tpl manifest with resolved Values
+    values:
+      - ../test-values/minimal.values.yaml
+      - ../test-values/raw-manifests.values.yaml
+    asserts:
+      - isKind:
+          of: ConfigMap
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: raw-cm-us-east-1
+        documentIndex: 1
+
+  - it: tpl manifest resolves the correct region when global.region changes
+    values:
+      - ../test-values/minimal.values.yaml
+      - ../test-values/raw-manifests.values.yaml
+    set:
+      global.region: eu-west-1
+    asserts:
+      - equal:
+          path: metadata.name
+          value: raw-cm-eu-west-1
+        documentIndex: 1
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects rawManifests item without content
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      rawManifests[0].tpl: false
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects rawManifests item with empty content
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      rawManifests[0].content: ""
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects unknown property in rawManifests item
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      rawManifests[0].content: "apiVersion: v1"
+      rawManifests[0].unknown: value
+    asserts:
+      - failedTemplate: {}

@@ -4,7 +4,6 @@ terminationGracePeriodSeconds: 30
 
 pdb:
   enabled: false
-  maxUnavailable: 1
 
 hpa:
   enabled: false

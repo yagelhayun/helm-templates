@@ -1,0 +1,12 @@
+rawManifests:
+  - content: |
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: raw-sa
+  - content: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: raw-cm-{{ .Values.global.region }}
+    tpl: true

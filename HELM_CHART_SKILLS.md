@@ -26,6 +26,7 @@ portName           — named port (default: "http")
 activeRegion       — enables blue/green deployment
 regions.*          — per-region value overrides
 configMap.*        — this service's ConfigMap
+rawManifests       — list of raw Kubernetes manifests to pass through as-is
 deployment.*       — enable/disable Deployment
 service.*          — enable/disable Service
 cronJob.*          — enable/disable and configure CronJob
@@ -70,6 +71,8 @@ terminationGracePeriodSeconds
 11. **Init containers and sidecars share the pod's volumes.** Any volume an init container or sidecar needs must also be declared in the top-level `volumes` config.
 
 12. **`global.ignoreLookup: "true"` must be set when rendering without a cluster** (CI, local testing, dry-run). Without it, `core.container.env` and volume helpers will fail trying to look up secrets/configmaps from the cluster.
+
+13. **`rawManifests` is for resources not supported by the chart.** Each entry requires a `content` field (non-empty string). Set `tpl: true` to process the content as a Go template with access to `.Values`, `.Release`, and `.Chart`. Omit `tpl` or set it to `false` for verbatim passthrough.
 
 ---
 
@@ -417,6 +420,33 @@ cronJob:
   schedule: "@daily"     # schedule can still be present; ignored when disabled
 ```
 
+### Inject a raw Kubernetes manifest
+
+Use `rawManifests` for resource types not supported by the chart (e.g. `IngressClass`, `NetworkPolicy`, custom CRDs).
+
+```yaml
+# Verbatim passthrough
+rawManifests:
+  - content: |
+      apiVersion: networking.k8s.io/v1
+      kind: IngressClass
+      metadata:
+        name: my-ingress
+      spec:
+        controller: example.com/ingress-controller
+
+# With Go templating — access .Values, .Release, .Chart
+rawManifests:
+  - content: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: {{ .Release.Name }}-extra
+      data:
+        region: {{ .Values.global.region }}
+    tpl: true
+```
+
 ---
 
 ## What NOT to do
@@ -428,3 +458,5 @@ cronJob:
 - Do not use `exec` and `httpGet` in the same probe.
 - Do not set `resources.limitMultiplier` below `1`.
 - Do not set `revisionHistoryLimit` to `0` unless you explicitly want to disable rollback.
+- Do not use `{{ }}` in `rawManifests` content without setting `tpl: true` if you intend them to be resolved — without it they render literally.
+- Do not leave `rawManifests[].content` empty — it will be rejected by schema validation.

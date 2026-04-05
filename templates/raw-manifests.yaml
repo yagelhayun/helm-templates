@@ -1,0 +1,8 @@
+{{- range $manifest := .Values.rawManifests -}}
+---
+{{- if $manifest.tpl }}
+{{- tpl $manifest.content $ }}
+{{- else }}
+{{- $manifest.content }}
+{{- end }}
+{{- end }}

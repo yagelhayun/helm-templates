@@ -365,6 +365,34 @@ annotations:                        # per-resource annotation blocks
 topologySpreadConstraints: []       # defaults to hostname + zone spreading; set to [] to disable
 ```
 
+### Raw manifests
+
+An escape hatch for Kubernetes resources not supported by the chart. Each entry is rendered as a separate YAML document.
+
+```yaml
+rawManifests:
+  # Plain passthrough — content is emitted verbatim
+  - content: |
+      apiVersion: networking.k8s.io/v1
+      kind: IngressClass
+      metadata:
+        name: my-ingress-class
+      spec:
+        controller: example.com/ingress-controller
+
+  # Templated — content is processed as a Go template with full access to .Values, .Release, .Chart
+  - content: |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: {{ .Release.Name }}-extra
+      data:
+        region: {{ .Values.global.region }}
+    tpl: true
+```
+
+`tpl: false` is the default. Set `tpl: true` only when the content contains `{{ }}` expressions — without it, template markers are rendered literally.
+
 ---
 
 ## Umbrella charts
