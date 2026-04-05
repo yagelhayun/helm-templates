@@ -106,3 +106,57 @@ tests:
       - equal:
           path: spec.revisionHistoryLimit
           value: 1
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects StatefulSet workload without statefulSet block
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      workload.type: StatefulSet
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects empty statefulSet.serviceName
+    values:
+      - ../test-values/statefulset.values.yaml
+    set:
+      statefulSet.serviceName: ""
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid podManagementPolicy
+    values:
+      - ../test-values/statefulset.values.yaml
+    set:
+      statefulSet.podManagementPolicy: Random
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects volumeClaimTemplate without name
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      workload.type: StatefulSet
+      statefulSet.serviceName: myapp-headless
+      statefulSet.volumeClaimTemplates[0].size: 10Gi
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects volumeClaimTemplate without size
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      workload.type: StatefulSet
+      statefulSet.serviceName: myapp-headless
+      statefulSet.volumeClaimTemplates[0].name: data
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid accessMode in volumeClaimTemplate
+    values:
+      - ../test-values/statefulset.values.yaml
+    set:
+      statefulSet.volumeClaimTemplates[0].accessMode: ReadOnly
+    asserts:
+      - failedTemplate: {}

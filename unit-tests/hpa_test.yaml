@@ -46,3 +46,42 @@ tests:
       - equal:
           path: spec.maxReplicas
           value: 4
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects hpa.enabled true without maxReplicas
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      hpa.enabled: true
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects maxReplicas of 0
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      hpa.enabled: true
+      hpa.maxReplicas: 0
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects averageUtilization above 99
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      hpa.enabled: true
+      hpa.maxReplicas: 5
+      hpa.resources.cpu.averageUtilization: 100
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects averageUtilization of 0
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      hpa.enabled: true
+      hpa.maxReplicas: 5
+      hpa.resources.cpu.averageUtilization: 0
+    asserts:
+      - failedTemplate: {}

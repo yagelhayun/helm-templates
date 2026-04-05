@@ -48,3 +48,29 @@ tests:
       - equal:
           path: metadata.labels.version
           value: v2
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects unknown root-level property
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      unknownTopLevelKey: value
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects empty global.region
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      global.region: ""
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects resources.limitMultiplier below 1
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      resources.limitMultiplier: 0.5
+    asserts:
+      - failedTemplate: {}

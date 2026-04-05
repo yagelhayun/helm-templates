@@ -129,3 +129,37 @@ tests:
           content:
             name: my-data
             mountPath: /data
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects PVC without size
+    templates:
+      - templates/pvc.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      persistentVolumeClaims.my-data.storageClass: fast-ssd
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid accessMode in PVC
+    templates:
+      - templates/pvc.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      persistentVolumeClaims.my-data.size: 10Gi
+      persistentVolumeClaims.my-data.accessMode: ReadOnly
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects pvcVolumeMount without mountPath
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      global.ignoreLookup: "true"
+      volumes.persistentVolumeClaims.my-data.readOnly: true
+    asserts:
+      - failedTemplate: {}

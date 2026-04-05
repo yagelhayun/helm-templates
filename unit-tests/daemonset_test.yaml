@@ -68,3 +68,14 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].ports[0].containerPort
           value: 9100
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects hpa.enabled true for DaemonSet workload
+    values:
+      - ../test-values/daemonset.values.yaml
+    set:
+      hpa.enabled: true
+      hpa.maxReplicas: 5
+    asserts:
+      - failedTemplate: {}

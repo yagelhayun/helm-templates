@@ -44,3 +44,43 @@ tests:
       - equal:
           path: spec.concurrencyPolicy
           value: Forbid
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects cronJob.enabled true without schedule
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      cronJob.enabled: true
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid concurrencyPolicy
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      cronJob.enabled: true
+      cronJob.schedule: "0 * * * *"
+      cronJob.concurrencyPolicy: Invalid
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects negative successfulJobsHistory
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      cronJob.enabled: true
+      cronJob.schedule: "0 * * * *"
+      cronJob.successfulJobsHistory: -1
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects negative failedJobsHistory
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      cronJob.enabled: true
+      cronJob.schedule: "0 * * * *"
+      cronJob.failedJobsHistory: -1
+    asserts:
+      - failedTemplate: {}

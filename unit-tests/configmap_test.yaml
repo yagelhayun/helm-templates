@@ -54,3 +54,22 @@ tests:
       - equal:
           path: data.ENDPOINT
           value: storage.us-west-1.example.com
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects configMap.enabled true without data
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects unknown property in configMap
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: false
+      configMap.unknown: value
+    asserts:
+      - failedTemplate: {}

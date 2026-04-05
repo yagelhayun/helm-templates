@@ -53,3 +53,53 @@ tests:
     asserts:
       - exists:
           path: spec.template.metadata.annotations
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects invalid workload.type
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      workload.type: Job
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects port of 0
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      port: 0
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects port above 65535
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      port: 65536
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects replicas below 0
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      replicas: -1
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects empty global.region
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      global.region: ""
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid image pullPolicy
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      image.pullPolicy: always
+    asserts:
+      - failedTemplate: {}

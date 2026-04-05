@@ -41,3 +41,21 @@ tests:
       - equal:
           path: spec.strategy.rollingUpdate.maxSurge
           value: "1"
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects invalid strategy.type
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      strategy.type: BlueGreen
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects negative strategy.partition
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      strategy.partition: -1
+    asserts:
+      - failedTemplate: {}

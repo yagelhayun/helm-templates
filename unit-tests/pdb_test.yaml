@@ -70,3 +70,13 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects pdb.enabled true without minAvailable or maxUnavailable
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      pdb.enabled: true
+    asserts:
+      - failedTemplate: {}

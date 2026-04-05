@@ -140,3 +140,67 @@ tests:
       - equal:
           path: spec.template.spec.topologySpreadConstraints[0].whenUnsatisfiable
           value: DoNotSchedule
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects probe with both httpGet and exec
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      probes.readiness.httpGet.path: /health
+      probes.readiness.exec.command[0]: /bin/check
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects probe with neither httpGet nor exec
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      probes.readiness.failureThreshold: 3
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects failureThreshold below 1
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      probes.readiness.httpGet.path: /health
+      probes.readiness.failureThreshold: 0
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects revisionHistoryLimit of 0
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      revisionHistoryLimit: 0
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects terminationGracePeriodSeconds below 0
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      terminationGracePeriodSeconds: -1
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects topologySpreadConstraints maxSkew below 1
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      topologySpreadConstraints[0].maxSkew: 0
+      topologySpreadConstraints[0].topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints[0].whenUnsatisfiable: ScheduleAnyway
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid topologySpreadConstraints whenUnsatisfiable
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      topologySpreadConstraints[0].maxSkew: 1
+      topologySpreadConstraints[0].topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints[0].whenUnsatisfiable: Never
+    asserts:
+      - failedTemplate: {}
