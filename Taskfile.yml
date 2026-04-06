@@ -6,6 +6,16 @@ tasks:
     cmds:
       - rm -rf charts/ ./**/*.lock ./**/*.tgz
 
+  lint:
+    desc: Lint the chart (validates structure and JSON schema)
+    cmds:
+      - helm lint . -f test-values/common.values.yaml -f test-values/prod.values.yaml
+
+  template:
+    desc: Render the chart
+    cmds:
+      - helm template test . -f test-values/common.values.yaml -f test-values/prod.values.yaml
+
   test:
     desc: Run helm-templates unit tests against local helm-core
     cmds:

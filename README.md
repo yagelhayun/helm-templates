@@ -334,6 +334,70 @@ sidecars:
 
 Both share the pod's volumes.
 
+### Scheduling
+
+```yaml
+# Pin pods to nodes that match all of the given labels.
+nodeSelector:
+  kubernetes.io/arch: amd64
+  node-role.kubernetes.io/worker: "true"
+
+# Allow pods to be scheduled on nodes with matching taints.
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists          # Exists | Equal
+    effect: NoSchedule        # NoSchedule | PreferNoSchedule | NoExecute
+  - key: node.kubernetes.io/not-ready
+    operator: Exists
+    effect: NoExecute
+    tolerationSeconds: 300    # evict after 5 minutes on not-ready nodes
+
+# Simplified affinity API — labelSelector is auto-injected for podAntiAffinity.
+affinity:
+  nodeAffinity:
+    required:                             # AND-ed inside one nodeSelectorTerm
+      - key: topology.kubernetes.io/zone
+        operator: In                      # In | NotIn | Exists | DoesNotExist | Gt | Lt
+        values: [us-east-1a, us-east-1b]
+    preferred:
+      - weight: 50
+        key: kubernetes.io/arch
+        operator: In
+        values: [amd64]
+  podAntiAffinity:
+    preferred:                            # labelSelector auto-injected from chart name
+      - weight: 100
+        topologyKey: kubernetes.io/hostname
+    required:
+      - topologyKey: topology.kubernetes.io/zone
+
+# Schedule at higher or lower priority relative to other pods.
+# The named PriorityClass must exist in the cluster.
+priorityClassName: high-priority
+```
+
+### Security
+
+`podSecurityContext` applies to all containers in the pod. `containerSecurityContext` applies to the main container only. To set a security context on a sidecar or init container, add `containerSecurityContext` inside that container's spec.
+
+```yaml
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 3000
+  fsGroup: 2000
+  fsGroupChangePolicy: OnRootMismatch   # Always | OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault                # RuntimeDefault | Localhost | Unconfined
+
+containerSecurityContext:
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+    add: [NET_BIND_SERVICE]
+```
+
 ### ServiceAccount
 
 ```yaml

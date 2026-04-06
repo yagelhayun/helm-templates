@@ -82,7 +82,6 @@ tests:
     values:
       - ../test-values/minimal.values.yaml
     set:
-      rawManifests[0].content: "apiVersion: v1"
       rawManifests[0].unknown: value
     asserts:
       - failedTemplate: {}

@@ -40,6 +40,12 @@ sidecars           — sidecar container list
 labels             — extra labels
 annotations.*      — per-resource annotation blocks
 serviceAccount     — service account name
+nodeSelector       — pin pods to nodes matching labels
+tolerations        — allow scheduling on tainted nodes
+affinity           — node/pod affinity and anti-affinity rules
+podSecurityContext      — pod-level security settings (fsGroup, runAsUser, etc.)
+containerSecurityContext — main container security settings (capabilities, readOnly, etc.)
+priorityClassName  — scheduling priority class
 revisionHistoryLimit
 terminationGracePeriodSeconds
 ```
@@ -269,6 +275,35 @@ cronJob:
     command: ["/bin/sh"]
     args: ["-c", "/app/cleanup.sh"]
 
+nodeSelector:
+  kubernetes.io/arch: amd64
+
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+
+affinity:
+  podAntiAffinity:
+    preferred:
+      - weight: 100
+        topologyKey: kubernetes.io/hostname
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+
+priorityClassName: high-priority       # PriorityClass must exist in the cluster
+
 labels:
   team: backend
   cost-center: "1234"
@@ -420,6 +455,91 @@ cronJob:
   schedule: "@daily"     # schedule can still be present; ignored when disabled
 ```
 
+### Target specific nodes (nodeSelector)
+
+```yaml
+nodeSelector:
+  kubernetes.io/arch: amd64
+  node-role.kubernetes.io/worker: "true"
+```
+
+### Schedule on GPU / tainted nodes (tolerations)
+
+```yaml
+tolerations:
+  - key: nvidia.com/gpu
+    operator: Exists
+    effect: NoSchedule
+  - key: node.kubernetes.io/not-ready
+    operator: Exists
+    effect: NoExecute
+    tolerationSeconds: 300    # evict after 5 minutes on not-ready nodes
+```
+
+### Spread across zones with hard anti-affinity (affinity)
+
+```yaml
+# labelSelector is auto-injected for podAntiAffinity using the chart's selector labels.
+affinity:
+  nodeAffinity:
+    required:                             # AND-ed inside one nodeSelectorTerm
+      - key: topology.kubernetes.io/zone
+        operator: In                      # In | NotIn | Exists | DoesNotExist | Gt | Lt
+        values: [us-east-1a, us-east-1b]
+    preferred:
+      - weight: 50
+        key: kubernetes.io/arch
+        operator: In
+        values: [amd64]
+  podAntiAffinity:
+    preferred:                            # labelSelector auto-injected
+      - weight: 100
+        topologyKey: kubernetes.io/hostname
+    required:
+      - topologyKey: topology.kubernetes.io/zone
+```
+
+### Run as non-root with a read-only filesystem (security contexts)
+
+```yaml
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 3000
+  fsGroup: 2000
+  fsGroupChangePolicy: OnRootMismatch
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+```
+
+For sidecars or init containers, set `containerSecurityContext` inside the container spec:
+
+```yaml
+sidecars:
+  - name: log-shipper
+    image:
+      url: fluent/fluent-bit
+      tag: "3.0"
+    resources:
+      cpu: 50m
+      memory: 64Mi
+    containerSecurityContext:
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+```
+
+### Set pod scheduling priority
+
+```yaml
+priorityClassName: high-priority    # PriorityClass must exist in the cluster
+```
+
 ### Inject a raw Kubernetes manifest
 
 Use `rawManifests` for resource types not supported by the chart (e.g. `IngressClass`, `NetworkPolicy`, custom CRDs).
@@ -460,3 +580,9 @@ rawManifests:
 - Do not set `revisionHistoryLimit` to `0` unless you explicitly want to disable rollback.
 - Do not use `{{ }}` in `rawManifests` content without setting `tpl: true` if you intend them to be resolved — without it they render literally.
 - Do not leave `rawManifests[].content` empty — it will be rejected by schema validation.
+- `nodeSelector` values must all be strings — integer or boolean values are rejected.
+- `tolerations[].operator` must be `Exists` or `Equal`. `tolerations[].effect` must be `NoSchedule`, `PreferNoSchedule`, or `NoExecute`.
+- `tolerations[].tolerationSeconds` is only meaningful when `effect: NoExecute`.
+- `podSecurityContext` applies to the entire pod (all containers). `containerSecurityContext` applies only to the main container. To set security context on a sidecar or init container, add `containerSecurityContext` inside that container's spec.
+- `affinity` uses a simplified API. `nodeAffinity.required/preferred` are lists of `{key, operator, values?}` / `{weight, key, operator, values?}` matchExpressions. `podAntiAffinity.required/preferred` take only `{topologyKey}` / `{weight, topologyKey}` — the `labelSelector` is auto-injected from the chart's selector labels, the same way `topologySpreadConstraints` works.
+- `priorityClassName` must reference a `PriorityClass` resource that exists in the cluster.

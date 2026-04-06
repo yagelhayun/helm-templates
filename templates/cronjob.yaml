@@ -34,6 +34,21 @@ spec:
           {{- with (include "core.pod.initContainers" $context) }}
           initContainers: {{ . | indent 10 }}
           {{- end }}
+          {{- with (include "core.pod.priorityClassName" $context) }}
+          priorityClassName: {{ . }}
+          {{- end }}
+          {{- with (include "core.pod.nodeSelector" $context) }}
+          nodeSelector: {{ . | nindent 10 }}
+          {{- end }}
+          {{- with (include "core.pod.affinity" $context) }}
+          affinity: {{ . | nindent 10 }}
+          {{- end }}
+          {{- with (include "core.pod.tolerations" $context) }}
+          tolerations: {{ . | nindent 10 }}
+          {{- end }}
+          {{- with (include "core.pod.securityContext" $context) }}
+          securityContext: {{ . | nindent 10 }}
+          {{- end }}
           containers: {{ include "core.container.render" $context | indent 12 }}
           restartPolicy: OnFailure
 {{- end }}

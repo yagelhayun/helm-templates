@@ -44,6 +44,12 @@
     "regions":                      { "type": "object" },
     "strategy":                     { "$ref": "#/definitions/strategyConfig" },
     "topologySpreadConstraints":    { "$ref": "#/definitions/topologySpreadConstraintsConfig" },
+    "nodeSelector":                 { "type": "object", "additionalProperties": { "type": "string" } },
+    "tolerations":                  { "type": "array", "items": { "$ref": "#/definitions/tolerationConfig" } },
+    "affinity":                     { "$ref": "#/definitions/affinityConfig" },
+    "podSecurityContext":           { "$ref": "#/definitions/podSecurityContextConfig" },
+    "containerSecurityContext":     { "$ref": "#/definitions/containerSecurityContextConfig" },
+    "priorityClassName":            { "type": "string" },
     "workload":                     { "$ref": "#/definitions/workloadConfig" },
     "statefulSet":                  { "$ref": "#/definitions/statefulSetConfig" },
 
@@ -435,9 +441,10 @@
         "args":      { "type": "array" },
         "envFrom":   { "$ref": "#/definitions/envFromConfig" },
         "env":       { "$ref": "#/definitions/envConfig" },
-        "resources": { "$ref": "#/definitions/resourcesConfig" },
-        "volumes":   { "$ref": "#/definitions/volumesConfig" },
-        "probes":    { "$ref": "#/definitions/probesConfig" }
+        "resources":              { "$ref": "#/definitions/resourcesConfig" },
+        "volumes":                { "$ref": "#/definitions/volumesConfig" },
+        "probes":                 { "$ref": "#/definitions/probesConfig" },
+        "containerSecurityContext": { "$ref": "#/definitions/containerSecurityContextConfig" }
       }
     },
 
@@ -550,6 +557,150 @@
       "required": ["averageUtilization"],
       "properties": {
         "averageUtilization": { "type": "integer", "minimum": 1, "maximum": 99 }
+      }
+    },
+
+    "tolerationConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key":                { "type": "string" },
+        "operator":           { "type": "string", "enum": ["Exists", "Equal"] },
+        "value":              { "type": "string" },
+        "effect":             { "type": "string", "enum": ["NoSchedule", "PreferNoSchedule", "NoExecute"] },
+        "tolerationSeconds":  { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "seccompProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type":              { "type": "string", "enum": ["RuntimeDefault", "Unconfined", "Localhost"] },
+        "localhostProfile":  { "type": "string" }
+      }
+    },
+
+    "podSecurityContextConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runAsNonRoot":         { "type": "boolean" },
+        "runAsUser":            { "type": "integer", "minimum": 0 },
+        "runAsGroup":           { "type": "integer", "minimum": 0 },
+        "fsGroup":              { "type": "integer", "minimum": 0 },
+        "fsGroupChangePolicy":  { "type": "string", "enum": ["Always", "OnRootMismatch"] },
+        "supplementalGroups":   { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+        "sysctls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "value"],
+            "properties": {
+              "name":  { "type": "string" },
+              "value": { "type": "string" }
+            }
+          }
+        },
+        "seccompProfile": { "$ref": "#/definitions/seccompProfile" }
+      }
+    },
+
+    "matchExpression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "operator"],
+      "properties": {
+        "key":      { "type": "string" },
+        "operator": { "type": "string", "enum": ["In", "NotIn", "Exists", "DoesNotExist", "Gt", "Lt"] },
+        "values":   { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "preferredNodeExpression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["weight", "key", "operator"],
+      "properties": {
+        "weight":   { "type": "integer", "minimum": 1, "maximum": 100 },
+        "key":      { "type": "string" },
+        "operator": { "type": "string", "enum": ["In", "NotIn", "Exists", "DoesNotExist", "Gt", "Lt"] },
+        "values":   { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "topologyKeyEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["topologyKey"],
+      "properties": {
+        "topologyKey": { "type": "string" }
+      }
+    },
+
+    "weightedTopologyKeyEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["weight", "topologyKey"],
+      "properties": {
+        "weight":      { "type": "integer", "minimum": 1, "maximum": 100 },
+        "topologyKey": { "type": "string" }
+      }
+    },
+
+    "affinityConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nodeAffinity": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required":  { "type": "array", "items": { "$ref": "#/definitions/matchExpression" } },
+            "preferred": { "type": "array", "items": { "$ref": "#/definitions/preferredNodeExpression" } }
+          },
+          "anyOf": [
+            { "required": ["required"] },
+            { "required": ["preferred"] }
+          ]
+        },
+        "podAntiAffinity": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required":  { "type": "array", "items": { "$ref": "#/definitions/topologyKeyEntry" } },
+            "preferred": { "type": "array", "items": { "$ref": "#/definitions/weightedTopologyKeyEntry" } }
+          },
+          "anyOf": [
+            { "required": ["required"] },
+            { "required": ["preferred"] }
+          ]
+        }
+      }
+    },
+
+    "containerSecurityContextConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "readOnlyRootFilesystem":   { "type": "boolean" },
+        "allowPrivilegeEscalation": { "type": "boolean" },
+        "privileged":               { "type": "boolean" },
+        "runAsNonRoot":             { "type": "boolean" },
+        "runAsUser":                { "type": "integer", "minimum": 0 },
+        "runAsGroup":               { "type": "integer", "minimum": 0 },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "add":  { "type": "array", "items": { "type": "string" } },
+            "drop": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "seccompProfile": { "$ref": "#/definitions/seccompProfile" },
+        "procMount":      { "type": "string" }
       }
     }
   }
