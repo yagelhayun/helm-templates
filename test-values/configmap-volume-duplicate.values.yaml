@@ -1,0 +1,32 @@
+global:
+  region: us-east-1
+  ignoreLookup: "true"
+
+port: 8080
+replicas: 1
+resources:
+  cpu: 100m
+  memory: 256Mi
+image:
+  url: myapp
+
+workload:
+  type: Deployment
+
+service:
+  enabled: false
+configMap:
+  enabled: true
+  as: volume
+  mountPath: /etc/config
+  data:
+    KEY: value
+cronJob:
+  enabled: false
+hpa:
+  enabled: false
+
+volumes:
+  configMaps:
+    templates:
+      mountPath: /etc/config

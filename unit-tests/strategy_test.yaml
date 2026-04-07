@@ -59,3 +59,20 @@ tests:
       strategy.partition: -1
     asserts:
       - failedTemplate: {}
+
+  - it: schema rejects strategy.partition on Deployment
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      strategy.partition: 1
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects strategy.partition on DaemonSet
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      workload.type: DaemonSet
+      strategy.partition: 1
+    asserts:
+      - failedTemplate: {}

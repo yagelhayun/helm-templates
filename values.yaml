@@ -8,6 +8,9 @@ pdb:
 hpa:
   enabled: false
 
+configMap:
+  as: "env"
+
 # RollingUpdate is the default type. Set type: Recreate to terminate all pods
 # before starting new ones (required when ReadWriteOnce volumes are in use).
 # maxUnavailable: 0 + maxSurge: 1 gives zero-downtime at the cost of extra capacity.

@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "additionalProperties": false,
+  "additionalProperties": true,
   "required": ["global", "port", "resources"],
   "properties": {
     "global": {
       "type": "object",
-      "additionalProperties": false,
+      "additionalProperties": true,
       "required": ["region"],
       "properties": {
         "region":       { "type": "string", "minLength": 1 },
@@ -58,14 +58,31 @@
       "additionalProperties": false,
       "required": ["enabled"],
       "properties": {
-        "enabled": { "type": "boolean" },
+        "enabled":   { "type": "boolean" },
+        "as":        { "type": "string", "enum": ["env", "volume"] },
+        "mountPath": { "type": "string" },
         "data": {
           "type": "object",
           "additionalProperties": { "type": ["string", "number", "boolean"] }
         }
       },
-      "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
-      "then": { "required": ["data"] }
+      "allOf": [
+        {
+          "title": "data is required when configMap is enabled",
+          "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+          "then": { "required": ["data"] }
+        },
+        {
+          "title": "mountPath is required when 'as' is 'volume'",
+          "if":   { "properties": { "as": { "const": "volume" } }, "required": ["as"] },
+          "then": { "required": ["mountPath"] }
+        },
+        {
+          "title": "mountPath is only allowed when 'as' is 'volume'",
+          "if":   { "required": ["mountPath"] },
+          "then": { "required": ["as"], "properties": { "as": { "const": "volume" } } }
+        }
+      ]
     },
 
     "service": {
@@ -150,18 +167,22 @@
       },
       "allOf": [
         {
+          "title": "service.nodePort requires service.type: NodePort",
           "if":   { "required": ["nodePort"] },
           "then": { "required": ["type"], "properties": { "type": { "const": "NodePort" } } }
         },
         {
+          "title": "service.loadBalancer requires service.type: LoadBalancer",
           "if":   { "required": ["loadBalancer"] },
           "then": { "required": ["type"], "properties": { "type": { "const": "LoadBalancer" } } }
         },
         {
+          "title": "service.externalName requires service.type: ExternalName",
           "if":   { "required": ["externalName"] },
           "then": { "required": ["type"], "properties": { "type": { "const": "ExternalName" } } }
         },
         {
+          "title": "service.trafficPolicy.external requires service.type NodePort or LoadBalancer",
           "if":   {
             "required": ["trafficPolicy"],
             "properties": { "trafficPolicy": { "required": ["external"] } }
@@ -169,6 +190,7 @@
           "then": { "required": ["type"], "properties": { "type": { "enum": ["NodePort", "LoadBalancer"] } } }
         },
         {
+          "title": "service.sessionAffinity.config requires sessionAffinity.type: ClientIP",
           "if":   {
             "required": ["sessionAffinity"],
             "properties": { "sessionAffinity": { "required": ["config"] } }
@@ -235,6 +257,22 @@
         }
       },
       "then": { "required": ["statefulSet"] }
+    },
+    {
+      "title": "strategy.partition is only valid for StatefulSet",
+      "if": {
+        "required": ["strategy"],
+        "properties": { "strategy": { "required": ["partition"] } }
+      },
+      "then": {
+        "required": ["workload"],
+        "properties": {
+          "workload": {
+            "required": ["type"],
+            "properties": { "type": { "const": "StatefulSet" } }
+          }
+        }
+      }
     },
     {
       "title": "HPA must be disabled for DaemonSet workloads",
@@ -339,13 +377,18 @@
         "minAvailable":   { "type": ["integer", "string"] },
         "maxUnavailable": { "type": ["integer", "string"] }
       },
-      "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
-      "then": {
-        "anyOf": [
-          { "required": ["minAvailable"] },
-          { "required": ["maxUnavailable"] }
-        ]
-      }
+      "allOf": [
+        {
+          "title": "pdb.minAvailable or pdb.maxUnavailable is required when pdb is enabled",
+          "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+          "then": {
+            "anyOf": [
+              { "required": ["minAvailable"] },
+              { "required": ["maxUnavailable"] }
+            ]
+          }
+        }
+      ]
     },
 
     "envFromConfig": {
@@ -388,8 +431,8 @@
       "type": "object",
       "additionalProperties": false,
       "oneOf": [
-        { "required": ["httpGet"], "not": { "required": ["exec"] } },
-        { "required": ["exec"],    "not": { "required": ["httpGet"] } }
+        { "title": "httpGet probe",  "required": ["httpGet"], "not": { "required": ["exec"] } },
+        { "title": "exec probe",     "required": ["exec"],    "not": { "required": ["httpGet"] } }
       ],
       "properties": {
         "httpGet": {
@@ -468,8 +511,13 @@
           }
         }
       },
-      "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
-      "then": { "required": ["schedule"] }
+      "allOf": [
+        {
+          "title": "cronJob.schedule is required when cronJob is enabled",
+          "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+          "then": { "required": ["schedule"] }
+        }
+      ]
     },
 
     "hpaConfig": {
@@ -488,8 +536,13 @@
           }
         }
       },
-      "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
-      "then": { "required": ["maxReplicas"] }
+      "allOf": [
+        {
+          "title": "hpa.maxReplicas is required when hpa is enabled",
+          "if":   { "properties": { "enabled": { "const": true } }, "required": ["enabled"] },
+          "then": { "required": ["maxReplicas"] }
+        }
+      ]
     },
 
     "workloadConfig": {
@@ -662,9 +715,14 @@
             "required":  { "type": "array", "items": { "$ref": "#/definitions/matchExpression" } },
             "preferred": { "type": "array", "items": { "$ref": "#/definitions/preferredNodeExpression" } }
           },
-          "anyOf": [
-            { "required": ["required"] },
-            { "required": ["preferred"] }
+          "allOf": [
+            {
+              "title": "affinity.nodeAffinity must specify at least 'required' or 'preferred'",
+              "anyOf": [
+                { "required": ["required"] },
+                { "required": ["preferred"] }
+              ]
+            }
           ]
         },
         "podAntiAffinity": {
@@ -674,9 +732,14 @@
             "required":  { "type": "array", "items": { "$ref": "#/definitions/topologyKeyEntry" } },
             "preferred": { "type": "array", "items": { "$ref": "#/definitions/weightedTopologyKeyEntry" } }
           },
-          "anyOf": [
-            { "required": ["required"] },
-            { "required": ["preferred"] }
+          "allOf": [
+            {
+              "title": "affinity.podAntiAffinity must specify at least 'required' or 'preferred'",
+              "anyOf": [
+                { "required": ["required"] },
+                { "required": ["preferred"] }
+              ]
+            }
           ]
         }
       }

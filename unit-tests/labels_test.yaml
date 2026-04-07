@@ -51,13 +51,14 @@ tests:
 
   # ── Schema validation ────────────────────────────────────────────────────────
 
-  - it: schema rejects unknown root-level property
+  - it: schema allows unknown root-level properties (custom config blocks)
     values:
       - ../test-values/minimal.values.yaml
     set:
       unknownTopLevelKey: value
     asserts:
-      - failedTemplate: {}
+      - hasDocuments:
+          count: 1
 
   - it: schema rejects empty global.region
     values:

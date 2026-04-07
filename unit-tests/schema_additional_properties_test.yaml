@@ -1,0 +1,93 @@
+suite: schema — custom root-level and global properties
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: allows arbitrary top-level keys (custom config block)
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: false
+      customConfig.url: "https://example.com"
+      customConfig.endpoint: "/data"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: allows multiple unrelated top-level keys
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: false
+      myServiceConfig.timeout: "30s"
+      featureFlags.enableBeta: true
+      raw: "some-string"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: custom root key can be referenced in configMap data via template
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+      configMap.data.APP_PORT: "8080"
+      customConfig.url: "https://example.com"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+
+  # ── global custom keys ───────────────────────────────────────────────────────
+
+  - it: allows arbitrary keys inside global (shared config block)
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: false
+      global.sharedConfig.baseUrl: "https://api.example.com"
+      global.featureFlags.enableBeta: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: global custom key is accessible in configMap data via template
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+      configMap.data.BASE_URL: "{{ .Values.global.sharedConfig.baseUrl }}"
+      global.sharedConfig.baseUrl: "https://api.example.com"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+
+  - it: schema still rejects unknown keys inside global.image
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      global.image.url: myrepo/base
+      global.image.unknownKey: value
+    asserts:
+      - failedTemplate: {}
+
+  # ── nested object enforcement still applies ──────────────────────────────────
+
+  - it: schema still rejects unknown keys inside known objects (configMap)
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: false
+      configMap.unknownKey: value
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema still rejects unknown keys inside resources
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      resources.unknownKey: value
+    asserts:
+      - failedTemplate: {}

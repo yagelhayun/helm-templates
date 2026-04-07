@@ -64,13 +64,17 @@ terminationGracePeriodSeconds
 
 5. **`configMap.data` is required when `configMap.enabled: true`.** Values must be strings, numbers, or booleans.
 
+   **`configMap.as`** controls how the inline ConfigMap is wired into the container (default: `env`):
+   - `env` — all keys are injected as environment variables via `envFrom.configMapRef` (default behaviour)
+   - `volume` — the ConfigMap is mounted as a directory; `configMap.mountPath` is required. The pod volume and container volumeMount are auto-created; no `envFrom` entry is added.
+
 6. **`cronJob.schedule` is required when `cronJob.enabled: true`.**
 
 7. **`hpa.maxReplicas` is required when `hpa.enabled: true`.** `minReplicas` is taken from the top-level `replicas` key.
 
 8. **Probes must have exactly one of `httpGet` or `exec`.** Never both.
 
-9. **`additionalProperties: false` is enforced across the entire schema.** Do not invent new top-level keys or keys inside known objects — they will be rejected by Helm at install time. Only use keys documented here.
+9. **Custom top-level keys and custom `global` keys are allowed.** You may add any key at the root of the values file or inside `global` (e.g. `customConfig`, `global.sharedConfig`) to hold structured data. These can be referenced in Go template expressions inside `configMap.data`. Because `core.general.config` merges `global.*` into the effective config, keys under `global` are also available to umbrella sub-charts. However, `additionalProperties: false` is still enforced **inside** all known sub-objects — unknown fields nested under `configMap`, `resources`, `global.image`, `service`, etc. are still schema errors.
 
 10. **`hpa.enabled` and `activeRegion` are mutually exclusive.** When `activeRegion` is set, the HPA is suppressed regardless of `hpa.enabled`. Do not set both.
 
@@ -574,6 +578,7 @@ rawManifests:
 - Do not add keys not listed in this document — they will be rejected by schema validation.
 - Do not set `hpa.enabled: true` and `activeRegion` together.
 - Do not use `configMap.enabled: true` without `configMap.data`.
+- Do not use `configMap.as: volume` without `configMap.mountPath`.
 - Do not reference a secret/configmap in `env` that doesn't exist in the target cluster (lookup will fail during real deployments).
 - Do not use `exec` and `httpGet` in the same probe.
 - Do not set `resources.limitMultiplier` below `1`.

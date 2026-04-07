@@ -73,3 +73,45 @@ tests:
       configMap.unknown: value
     asserts:
       - failedTemplate: {}
+
+  # ── Schema validation: configMap.as ──────────────────────────────────────────
+
+  - it: schema rejects as volume without mountPath
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: volume
+      configMap.data.KEY: value
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid as value
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: false
+      configMap.as: file
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects mountPath without as volume
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+      configMap.data.KEY: value
+      configMap.mountPath: /etc/config
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects mountPath with as env
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: env
+      configMap.data.KEY: value
+      configMap.mountPath: /etc/config
+    asserts:
+      - failedTemplate: {}

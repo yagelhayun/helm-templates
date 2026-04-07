@@ -1,0 +1,101 @@
+suite: configMap.as — env vs volume wiring
+templates:
+  - templates/deployment.yaml
+tests:
+  - it: default (no as) — adds configMapRef to envFrom
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+      configMap.data.KEY: value
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: templates
+
+  - it: as env — adds configMapRef to envFrom
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: env
+      configMap.data.KEY: value
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: templates
+
+  - it: as env — does not add a pod volume
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: env
+      configMap.data.KEY: value
+    asserts:
+      - notExists:
+          path: spec.template.spec.volumes
+
+  - it: as volume — adds pod volume for inline configMap
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: volume
+      configMap.mountPath: /etc/config
+      configMap.data.KEY: value
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: templates
+            configMap:
+              name: templates
+              defaultMode: 420
+
+  - it: as volume — adds volumeMount on container
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: volume
+      configMap.mountPath: /etc/config
+      configMap.data.KEY: value
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: templates
+            mountPath: /etc/config
+
+  - it: as volume — does not add configMapRef to envFrom
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: volume
+      configMap.mountPath: /etc/config
+      configMap.data.KEY: value
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+
+  # ── duplicate detection ───────────────────────────────────────────────────────
+
+  - it: fails when inline configmap name is duplicated in envFrom.configMaps
+    values:
+      - ../test-values/configmap-envfrom-duplicate.values.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "'templates' is already listed under envFrom.configMaps — remove the duplicate entry"
+
+  - it: fails when inline configmap name is duplicated in volumes.configMaps
+    values:
+      - ../test-values/configmap-volume-duplicate.values.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "'templates' is already listed under volumes.configMaps — remove the duplicate entry"

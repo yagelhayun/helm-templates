@@ -202,6 +202,41 @@ configMap:
 
 `configMap.data` is required when `configMap.enabled: true`.
 
+#### ConfigMap data with custom value blocks
+
+Go template expressions in `configMap.data` can reference any top-level key, including custom ones you define yourself. This lets you write structured config in YAML and serialize it into a single env var:
+
+```yaml
+# Define any top-level key — the schema allows it
+customConfig:
+  url: "https://example.com"
+  endpoint: "/data"
+  headers:
+    Content-Type: application/json
+
+configMap:
+  enabled: true
+  data:
+    CUSTOM_CONFIG: "{{ .Values.customConfig | toJson }}"
+    PORT: "{{ .Values.port }}"
+```
+
+Custom keys are freely allowed at the **root level** and inside **`global`**. Because `core.general.config` merges `global.*` into the effective config, placing shared data under `global` makes it available to all services in an umbrella chart:
+
+```yaml
+global:
+  region: us-east-1
+  sharedConfig:
+    baseUrl: "https://api.example.com"
+
+configMap:
+  enabled: true
+  data:
+    BASE_URL: "{{ .Values.global.sharedConfig.baseUrl }}"
+```
+
+`additionalProperties` is still enforced **inside** known sub-objects — adding an unknown field to `configMap`, `resources`, `global.image`, etc. remains a schema error.
+
 ### Probes
 
 Each probe must have exactly one of `httpGet` or `exec`.
