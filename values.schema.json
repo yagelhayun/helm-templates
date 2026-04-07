@@ -454,7 +454,8 @@
       "required": ["enabled"],
       "properties": {
         "enabled":               { "type": "boolean" },
-        "schedule":              { "type": "string" },
+        "suspend":               { "type": "boolean" },
+        "schedule":              { "type": "string", "pattern": "^(@(annually|daily|hourly|midnight|monthly|weekly|yearly)|[0-9*/,\\-]+ [0-9*/,\\-]+ [0-9*/,\\-]+ [0-9*/,\\-]+ [0-9*/,\\-]+)$" },
         "concurrencyPolicy":     { "type": "string", "enum": ["Allow", "Forbid", "Replace"] },
         "successfulJobsHistory": { "type": "integer", "minimum": 0 },
         "failedJobsHistory":     { "type": "integer", "minimum": 0 },
@@ -503,9 +504,9 @@
     "statefulSetConfig": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["serviceName"],
+      "required": ["headlessService"],
       "properties": {
-        "serviceName":          { "type": "string", "minLength": 1 },
+        "headlessService":      { "type": "string", "minLength": 1 },
         "podManagementPolicy":  { "type": "string", "enum": ["OrderedReady", "Parallel"] },
         "volumeClaimTemplates": {
           "type": "array",

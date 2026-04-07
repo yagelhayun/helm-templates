@@ -1,5 +1,6 @@
+.claude
 .git*
-test*
-README.md
+*test*
+*.md
 Taskfile.yml
 .helmignore

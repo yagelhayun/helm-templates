@@ -18,10 +18,10 @@ spec:
   replicas: {{ include "core.workload.replicas" $context }}
   selector:
     matchLabels: {{ include "core.general.selectorLabels" $context | nindent 6 }}
-  serviceName: {{ $config.statefulSet.serviceName }}
-  podManagementPolicy: {{ ($config.statefulSet).podManagementPolicy | default "OrderedReady" }}
+  serviceName: {{ include "core.statefulset.headlessService" $context }}
+  podManagementPolicy: {{ include "core.statefulset.podManagementPolicy" $context }}
   updateStrategy: {{ include "core.workload.strategy" $context | nindent 4 }}
-  revisionHistoryLimit: {{ ternary 1 (int $config.revisionHistoryLimit) (kindIs "invalid" $config.revisionHistoryLimit) }}
+  revisionHistoryLimit: {{ include "core.workload.revisionHistoryLimit" $context }}
   template:
     metadata:
       labels: {{ include "core.general.selectorLabels" $context | nindent 8 }}
@@ -39,7 +39,7 @@ spec:
       {{- with (include "core.pod.initContainers" $context) }}
       initContainers: {{ . | indent 8 }}
       {{- end }}
-      terminationGracePeriodSeconds: {{ ternary 30 (int $config.terminationGracePeriodSeconds) (kindIs "invalid" $config.terminationGracePeriodSeconds) }}
+      terminationGracePeriodSeconds: {{ include "core.pod.terminationGracePeriodSeconds" $context }}
       {{- with (include "core.pod.topologySpreadConstraints" $context) }}
       topologySpreadConstraints: {{ . | indent 8 }}
       {{- end }}

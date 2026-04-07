@@ -18,7 +18,7 @@ workload:
   type: StatefulSet
 
 statefulSet:
-  serviceName: myapp-headless
+  headlessService: myapp-headless
   podManagementPolicy: OrderedReady
   volumeClaimTemplates:
     - name: data

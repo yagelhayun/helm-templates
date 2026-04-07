@@ -18,7 +18,7 @@ tests:
       - isKind:
           of: StatefulSet
 
-  - it: sets serviceName from statefulSet.serviceName
+  - it: sets serviceName from statefulSet.headlessService
     values:
       - ../test-values/statefulset.values.yaml
     asserts:
@@ -117,11 +117,11 @@ tests:
     asserts:
       - failedTemplate: {}
 
-  - it: schema rejects empty statefulSet.serviceName
+  - it: schema rejects empty statefulSet.headlessService
     values:
       - ../test-values/statefulset.values.yaml
     set:
-      statefulSet.serviceName: ""
+      statefulSet.headlessService: ""
     asserts:
       - failedTemplate: {}
 
@@ -138,7 +138,7 @@ tests:
       - ../test-values/minimal.values.yaml
     set:
       workload.type: StatefulSet
-      statefulSet.serviceName: myapp-headless
+      statefulSet.headlessService: myapp-headless
       statefulSet.volumeClaimTemplates[0].size: 10Gi
     asserts:
       - failedTemplate: {}
@@ -148,7 +148,7 @@ tests:
       - ../test-values/minimal.values.yaml
     set:
       workload.type: StatefulSet
-      statefulSet.serviceName: myapp-headless
+      statefulSet.headlessService: myapp-headless
       statefulSet.volumeClaimTemplates[0].name: data
     asserts:
       - failedTemplate: {}

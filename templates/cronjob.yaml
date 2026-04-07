@@ -16,9 +16,10 @@ metadata:
   {{- end }}
 spec:
   schedule: {{ $config.cronJob.schedule | quote }}
-  concurrencyPolicy: {{ $config.cronJob.concurrencyPolicy | default "Forbid" }}
-  successfulJobsHistoryLimit: {{ int $config.cronJob.successfulJobsHistory | default 3 }}
-  failedJobsHistoryLimit: {{ int $config.cronJob.failedJobsHistory | default 1 }}
+  suspend: {{ include "core.cronjob.suspend" $context }}
+  concurrencyPolicy: {{ include "core.cronjob.concurrencyPolicy" $context }}
+  successfulJobsHistoryLimit: {{ include "core.cronjob.successfulJobsHistoryLimit" $context }}
+  failedJobsHistoryLimit: {{ include "core.cronjob.failedJobsHistoryLimit" $context }}
   jobTemplate:
     spec:
       completions: 1

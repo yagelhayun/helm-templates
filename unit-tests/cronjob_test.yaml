@@ -45,7 +45,85 @@ tests:
           path: spec.concurrencyPolicy
           value: Forbid
 
+  - it: defaults suspend to false when not set
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      cronJob.enabled: true
+    asserts:
+      - equal:
+          path: spec.suspend
+          value: false
+
+  - it: sets suspend to true when configured
+    values:
+      - ../test-values/common.values.yaml
+    set:
+      cronJob.enabled: true
+      cronJob.suspend: true
+    asserts:
+      - equal:
+          path: spec.suspend
+          value: true
+
   # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects non-boolean suspend
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      cronJob.enabled: true
+      cronJob.schedule: "0 * * * *"
+      cronJob.suspend: "yes"
+    asserts:
+      - failedTemplate: {}
+
+  - it: accepts a standard 5-field schedule
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      cronJob.enabled: true
+      cronJob.schedule: "0 2 * * 1-5"
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: accepts @hourly macro
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      cronJob.enabled: true
+      cronJob.schedule: "@hourly"
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: schema rejects a 6-field schedule (year not supported)
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      cronJob.enabled: true
+      cronJob.schedule: "0 0 * * * 2025"
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects an invalid schedule string
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      cronJob.enabled: true
+      cronJob.schedule: "not-a-cron"
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects unknown @ macro
+    values:
+      - ../test-values/minimal.values.yaml
+    set:
+      cronJob.enabled: true
+      cronJob.schedule: "@reboot"
+    asserts:
+      - failedTemplate: {}
 
   - it: schema rejects cronJob.enabled true without schedule
     values:

@@ -23,7 +23,7 @@ Select the workload kind with `workload.type`. Exactly one workload resource is 
 | Type | Notes |
 |------|-------|
 | `Deployment` | Stateless services (default) |
-| `StatefulSet` | Requires `statefulSet.serviceName` |
+| `StatefulSet` | Requires `statefulSet.headlessService` |
 | `DaemonSet` | `replicas` not required |
 
 ---
@@ -287,7 +287,7 @@ workload:
   type: StatefulSet
 
 statefulSet:
-  serviceName: my-headless-svc       # required
+  headlessService: my-headless-svc   # required — must exist in cluster before deploy
   podManagementPolicy: OrderedReady  # OrderedReady | Parallel
   volumeClaimTemplates:
     - name: data
