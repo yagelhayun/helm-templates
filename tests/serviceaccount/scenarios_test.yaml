@@ -1,0 +1,151 @@
+suite: ServiceAccount — opt-in, naming, imagePullSecrets, pod reference
+tests:
+
+  # ── Opt-in ───────────────────────────────────────────────────────────────────
+
+  - it: renders ServiceAccount when serviceAccount.create is true
+    templates:
+      - templates/serviceaccount.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      serviceAccount.create: true
+    asserts:
+      - isKind:
+          of: ServiceAccount
+
+  - it: does not render ServiceAccount when serviceAccount.create is false
+    templates:
+      - templates/serviceaccount.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      serviceAccount.create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: does not render ServiceAccount when serviceAccount is not set
+    templates:
+      - templates/serviceaccount.yaml
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # ── Naming ───────────────────────────────────────────────────────────────────
+
+  - it: uses chart name as ServiceAccount name when no name is set
+    templates:
+      - templates/serviceaccount.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      serviceAccount.create: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: templates
+
+  - it: uses configured name when serviceAccount.name is set
+    templates:
+      - templates/serviceaccount.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      serviceAccount.create: true
+      serviceAccount.name: my-sa
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-sa
+
+  # ── imagePullSecrets ──────────────────────────────────────────────────────────
+
+  - it: renders imagePullSecrets on ServiceAccount from serviceAccount.imagePullSecrets
+    templates:
+      - templates/serviceaccount.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      serviceAccount.create: true
+      serviceAccount.imagePullSecrets[0]: registry-secret
+    asserts:
+      - contains:
+          path: imagePullSecrets
+          content:
+            name: registry-secret
+
+  - it: does not render imagePullSecrets when none are set
+    templates:
+      - templates/serviceaccount.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      serviceAccount.create: true
+    asserts:
+      - notExists:
+          path: imagePullSecrets
+
+  # ── Pod reference ─────────────────────────────────────────────────────────────
+
+  - it: pod references chart name when create is true and no name is set
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      serviceAccount.create: true
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: templates
+
+  - it: pod references configured name when create is true and name is set
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      serviceAccount.create: true
+      serviceAccount.name: my-sa
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: my-sa
+
+  - it: pod falls back to default when create is not set
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: default
+
+  - it: pod uses configured serviceAccount.name without create
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      serviceAccount.name: my-service-account
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: my-service-account
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects unknown property in serviceAccount
+    templates:
+      - templates/serviceaccount.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      serviceAccount.create: true
+      serviceAccount.unknown: value
+    asserts:
+      - failedTemplate: {}

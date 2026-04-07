@@ -1,10 +1,13 @@
-suite: PersistentVolumeClaim rendering and pod volume mounting
+suite: PersistentVolumeClaim — rendering and pod volume mounting
 tests:
+
+  # ── PVC resource ─────────────────────────────────────────────────────────────
+
   - it: renders a PVC with required fields
     templates:
       - templates/pvc.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       persistentVolumeClaims.my-data.size: 10Gi
     asserts:
@@ -15,7 +18,7 @@ tests:
     templates:
       - templates/pvc.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       persistentVolumeClaims.my-data.size: 10Gi
     asserts:
@@ -27,7 +30,7 @@ tests:
     templates:
       - templates/pvc.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       persistentVolumeClaims.my-data.size: 10Gi
     asserts:
@@ -39,7 +42,7 @@ tests:
     templates:
       - templates/pvc.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       persistentVolumeClaims.my-data.size: 10Gi
       persistentVolumeClaims.my-data.accessMode: ReadWriteMany
@@ -52,7 +55,7 @@ tests:
     templates:
       - templates/pvc.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       persistentVolumeClaims.my-data.size: 10Gi
       persistentVolumeClaims.my-data.storageClass: fast-ssd
@@ -65,7 +68,7 @@ tests:
     templates:
       - templates/pvc.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       persistentVolumeClaims.my-data.size: 10Gi
     asserts:
@@ -76,16 +79,18 @@ tests:
     templates:
       - templates/pvc.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     asserts:
       - hasDocuments:
           count: 0
+
+  # ── Pod volume mounting ───────────────────────────────────────────────────────
 
   - it: pod spec includes persistentVolumeClaim volume
     templates:
       - templates/deployment.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       global.ignoreLookup: "true"
       volumes.persistentVolumeClaims.my-data.mountPath: /data
@@ -101,7 +106,7 @@ tests:
     templates:
       - templates/deployment.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       global.ignoreLookup: "true"
       volumes.persistentVolumeClaims.my-data.mountPath: /data
@@ -119,7 +124,7 @@ tests:
     templates:
       - templates/deployment.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       global.ignoreLookup: "true"
       volumes.persistentVolumeClaims.my-data.mountPath: /data
@@ -136,7 +141,7 @@ tests:
     templates:
       - templates/pvc.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       persistentVolumeClaims.my-data.storageClass: fast-ssd
     asserts:
@@ -146,7 +151,7 @@ tests:
     templates:
       - templates/pvc.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       persistentVolumeClaims.my-data.size: 10Gi
       persistentVolumeClaims.my-data.accessMode: ReadOnly
@@ -157,7 +162,7 @@ tests:
     templates:
       - templates/deployment.yaml
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       global.ignoreLookup: "true"
       volumes.persistentVolumeClaims.my-data.readOnly: true

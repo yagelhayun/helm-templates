@@ -1,5 +1,5 @@
-# Config-only chart — no workload type set.
-# Used for testing that workload templates do not render when workload.type is absent.
+# No workload type set — used to verify workload templates do not render
+# when workload.type is absent.
 global:
   region: us-east-1
   ignoreLookup: "true"

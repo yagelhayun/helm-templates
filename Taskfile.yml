@@ -9,14 +9,14 @@ tasks:
   lint:
     desc: Lint the chart (validates structure and JSON schema)
     cmds:
-      - helm lint . -f test-values/common.values.yaml -f test-values/prod.values.yaml
+      - helm lint . -f tests/_shared/common.yaml -f tests/_shared/prod.yaml
 
   template:
     desc: Render the chart
     cmds:
-      - helm template test . -f test-values/common.values.yaml -f test-values/prod.values.yaml
+      - helm template test . -f tests/_shared/common.yaml -f tests/_shared/prod.yaml
 
   test:
     desc: Run helm-templates unit tests against local helm-core
     cmds:
-      - helm unittest . -f 'unit-tests/*_test.yaml'
+      - helm unittest . -f 'tests/**/*_test.yaml'

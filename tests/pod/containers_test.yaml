@@ -1,0 +1,136 @@
+suite: pod — initContainers, sidecars, probes, terminationGracePeriodSeconds, revisionHistoryLimit
+templates:
+  - templates/deployment.yaml
+tests:
+
+  # ── initContainers ────────────────────────────────────────────────────────────
+
+  - it: renders initContainer
+    values:
+      - ../_shared/common.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: db-migration
+
+  # ── sidecars ──────────────────────────────────────────────────────────────────
+
+  - it: renders sidecar as second container
+    values:
+      - ../_shared/common.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: log-shipper
+
+  # ── probes ────────────────────────────────────────────────────────────────────
+
+  - it: renders readiness probe
+    values:
+      - ../_shared/common.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /health
+
+  - it: renders liveness probe with configured thresholds
+    values:
+      - ../_shared/common.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 1
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 15
+
+  - it: renders startup probe
+    values:
+      - ../_shared/common.yaml
+    asserts:
+      - exists:
+          path: spec.template.spec.containers[0].startupProbe
+
+  # ── terminationGracePeriodSeconds ────────────────────────────────────────────
+
+  - it: defaults terminationGracePeriodSeconds to 30
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 30
+
+  - it: uses configured terminationGracePeriodSeconds
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      terminationGracePeriodSeconds: 60
+    asserts:
+      - equal:
+          path: spec.template.spec.terminationGracePeriodSeconds
+          value: 60
+
+  # ── revisionHistoryLimit ──────────────────────────────────────────────────────
+
+  - it: defaults revisionHistoryLimit to 1
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 1
+
+  - it: uses configured revisionHistoryLimit
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      revisionHistoryLimit: 3
+    asserts:
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 3
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects probe with both httpGet and exec
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      probes.readiness.httpGet.path: /health
+      probes.readiness.exec.command[0]: /bin/check
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects probe with neither httpGet nor exec
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      probes.readiness.failureThreshold: 3
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects failureThreshold below 1
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      probes.readiness.httpGet.path: /health
+      probes.readiness.failureThreshold: 0
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects revisionHistoryLimit of 0
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      revisionHistoryLimit: 0
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects terminationGracePeriodSeconds below 0
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      terminationGracePeriodSeconds: -1
+    asserts:
+      - failedTemplate: {}

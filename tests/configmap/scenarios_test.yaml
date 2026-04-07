@@ -1,0 +1,258 @@
+suite: configMap — opt-in, region merging, env vs volume wiring
+tests:
+
+  # ── Opt-in ───────────────────────────────────────────────────────────────────
+
+  - it: does not render when configMap.enabled is false
+    templates:
+      - templates/configmap.yaml
+    values:
+      - ../_shared/common.yaml
+    set:
+      configMap.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a ConfigMap when configMap.enabled is true
+    templates:
+      - templates/configmap.yaml
+    values:
+      - ../_shared/common.yaml
+    set:
+      configMap.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+
+  # ── Region merging ────────────────────────────────────────────────────────────
+
+  - it: includes root-level data keys
+    templates:
+      - templates/configmap.yaml
+    values:
+      - ../_shared/common.yaml
+    set:
+      configMap.enabled: true
+    # configMap.data.APP_ENV=staging defined at root level
+    asserts:
+      - equal:
+          path: data.APP_ENV
+          value: staging
+
+  - it: applies region-specific data key override
+    templates:
+      - templates/configmap.yaml
+    values:
+      - ../_shared/common.yaml
+    set:
+      configMap.enabled: true
+      # global.region=us-east-1; regions.us-east-1.configMap.data.ENDPOINT=storage.us-east-1.example.com
+    asserts:
+      - equal:
+          path: data.ENDPOINT
+          value: storage.us-east-1.example.com
+
+  - it: picks the correct region override for a different region
+    templates:
+      - templates/configmap.yaml
+    values:
+      - ../_shared/common.yaml
+    set:
+      configMap.enabled: true
+      global.region: us-west-1
+    asserts:
+      - equal:
+          path: data.ENDPOINT
+          value: storage.us-west-1.example.com
+
+  # ── as: env (default) ────────────────────────────────────────────────────────
+
+  - it: default (no as) — adds configMapRef to envFrom
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: true
+      configMap.data.KEY: value
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: templates
+
+  - it: as env — adds configMapRef to envFrom
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: env
+      configMap.data.KEY: value
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: templates
+
+  - it: as env — does not add a pod volume
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: env
+      configMap.data.KEY: value
+    asserts:
+      - notExists:
+          path: spec.template.spec.volumes
+
+  # ── as: volume ───────────────────────────────────────────────────────────────
+
+  - it: as volume — adds pod volume for inline configMap
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: volume
+      configMap.mountPath: /etc/config
+      configMap.data.KEY: value
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: templates
+            configMap:
+              name: templates
+              defaultMode: 420
+
+  - it: as volume — adds volumeMount on container
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: volume
+      configMap.mountPath: /etc/config
+      configMap.data.KEY: value
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: templates
+            mountPath: /etc/config
+
+  - it: as volume — does not add configMapRef to envFrom
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: volume
+      configMap.mountPath: /etc/config
+      configMap.data.KEY: value
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+
+  # ── duplicate detection ───────────────────────────────────────────────────────
+
+  - it: fails when inline configmap name is duplicated in envFrom.configMaps
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ./envfrom-duplicate.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "'templates' is already listed under envFrom.configMaps — remove the duplicate entry"
+
+  - it: fails when inline configmap name is duplicated in volumes.configMaps
+    templates:
+      - templates/deployment.yaml
+    values:
+      - ./volume-duplicate.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "'templates' is already listed under volumes.configMaps — remove the duplicate entry"
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects configMap.enabled true without data
+    templates:
+      - templates/configmap.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: true
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects unknown property in configMap
+    templates:
+      - templates/configmap.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: false
+      configMap.unknown: value
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects as volume without mountPath
+    templates:
+      - templates/configmap.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: volume
+      configMap.data.KEY: value
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid as value
+    templates:
+      - templates/configmap.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: false
+      configMap.as: file
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects mountPath without as volume
+    templates:
+      - templates/configmap.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: true
+      configMap.data.KEY: value
+      configMap.mountPath: /etc/config
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects mountPath with as env
+    templates:
+      - templates/configmap.yaml
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      configMap.enabled: true
+      configMap.as: env
+      configMap.data.KEY: value
+      configMap.mountPath: /etc/config
+    asserts:
+      - failedTemplate: {}

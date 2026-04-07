@@ -7,7 +7,7 @@ tests:
 
   - it: renders no documents when rawManifests is not set
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     asserts:
       - hasDocuments:
           count: 0
@@ -16,16 +16,16 @@ tests:
 
   - it: renders one document per manifest entry
     values:
-      - ../test-values/minimal.values.yaml
-      - ../test-values/raw-manifests.values.yaml
+      - ../_shared/minimal.yaml
+      - ./manifests.yaml
     asserts:
       - hasDocuments:
           count: 2
 
   - it: renders the correct kind for a plain manifest
     values:
-      - ../test-values/minimal.values.yaml
-      - ../test-values/raw-manifests.values.yaml
+      - ../_shared/minimal.yaml
+      - ./manifests.yaml
     asserts:
       - isKind:
           of: ServiceAccount
@@ -37,8 +37,8 @@ tests:
 
   - it: renders a tpl manifest with resolved Values
     values:
-      - ../test-values/minimal.values.yaml
-      - ../test-values/raw-manifests.values.yaml
+      - ../_shared/minimal.yaml
+      - ./manifests.yaml
     asserts:
       - isKind:
           of: ConfigMap
@@ -50,8 +50,8 @@ tests:
 
   - it: tpl manifest resolves the correct region when global.region changes
     values:
-      - ../test-values/minimal.values.yaml
-      - ../test-values/raw-manifests.values.yaml
+      - ../_shared/minimal.yaml
+      - ./manifests.yaml
     set:
       global.region: eu-west-1
     asserts:
@@ -64,7 +64,7 @@ tests:
 
   - it: schema rejects rawManifests item without content
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       rawManifests[0].tpl: false
     asserts:
@@ -72,7 +72,7 @@ tests:
 
   - it: schema rejects rawManifests item with empty content
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       rawManifests[0].content: ""
     asserts:
@@ -80,7 +80,7 @@ tests:
 
   - it: schema rejects unknown property in rawManifests item
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       rawManifests[0].unknown: value
     asserts:

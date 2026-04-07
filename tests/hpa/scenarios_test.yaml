@@ -1,29 +1,32 @@
-suite: HPA opt-in and activeRegion suppression
+suite: HPA — opt-in, activeRegion suppression, and schema
 templates:
   - templates/hpa.yaml
 tests:
+
+  # ── Opt-in / render guard ────────────────────────────────────────────────────
+
   - it: does not render when hpa.enabled is false
     values:
-      - ../test-values/common.values.yaml
-    # hpa.enabled=false in common.values.yaml
+      - ../_shared/common.yaml
+    # hpa.enabled=false in common.yaml
     asserts:
       - hasDocuments:
           count: 0
 
   - it: does not render when hpa.enabled is true but activeRegion is set
     values:
-      - ../test-values/common.values.yaml
-      - ../test-values/prod.values.yaml
+      - ../_shared/common.yaml
+      - ../_shared/prod.yaml
     set:
       hpa.enabled: true
-      # activeRegion=us-east-1 from common.values.yaml → HPA suppressed
+      # activeRegion=us-east-1 from common.yaml → HPA suppressed
     asserts:
       - hasDocuments:
           count: 0
 
   - it: does not render when workload.type is DaemonSet even if hpa.enabled is true
     values:
-      - ../test-values/daemonset.values.yaml
+      - ../daemonset/values.yaml
     set:
       hpa.enabled: false
       # schema enforces hpa.enabled: false for DaemonSet; template also guards
@@ -33,8 +36,8 @@ tests:
 
   - it: renders an HPA when hpa.enabled is true and activeRegion is not set
     values:
-      - ../test-values/common.values.yaml
-      - ../test-values/prod.values.yaml
+      - ../_shared/common.yaml
+      - ../_shared/prod.yaml
     set:
       hpa.enabled: true
       activeRegion: ""
@@ -51,7 +54,7 @@ tests:
 
   - it: schema rejects hpa.enabled true without maxReplicas
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       hpa.enabled: true
     asserts:
@@ -59,7 +62,7 @@ tests:
 
   - it: schema rejects maxReplicas of 0
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       hpa.enabled: true
       hpa.maxReplicas: 0
@@ -68,7 +71,7 @@ tests:
 
   - it: schema rejects averageUtilization above 99
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       hpa.enabled: true
       hpa.maxReplicas: 5
@@ -78,7 +81,7 @@ tests:
 
   - it: schema rejects averageUtilization of 0
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       hpa.enabled: true
       hpa.maxReplicas: 5

@@ -1,0 +1,117 @@
+suite: pod — podSecurityContext, containerSecurityContext, priorityClassName
+templates:
+  - templates/deployment.yaml
+tests:
+
+  # ── podSecurityContext ────────────────────────────────────────────────────────
+
+  - it: renders podSecurityContext
+    values:
+      - ./scheduling.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1000
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 2000
+
+  - it: renders podSecurityContext with seccompProfile
+    values:
+      - ./scheduling.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.seccompProfile.type
+          value: RuntimeDefault
+
+  - it: omits securityContext when podSecurityContext not set
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.securityContext
+
+  # ── containerSecurityContext ──────────────────────────────────────────────────
+
+  - it: renders containerSecurityContext on main container
+    values:
+      - ./scheduling.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: false
+      - contains:
+          path: spec.template.spec.containers[0].securityContext.capabilities.drop
+          content: ALL
+
+  - it: omits securityContext on container when not set
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].securityContext
+
+  # ── priorityClassName ─────────────────────────────────────────────────────────
+
+  - it: renders priorityClassName
+    values:
+      - ./scheduling.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: high-priority
+
+  - it: omits priorityClassName when not set
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.priorityClassName
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects unknown field in containerSecurityContext
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      containerSecurityContext.unknownFieldDuplicate: true
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid podSecurityContext fsGroupChangePolicy
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      podSecurityContext.fsGroupChangePolicy: Invalid
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid seccompProfile type
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      podSecurityContext.seccompProfile.type: Bad
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects negative runAsUser
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      podSecurityContext.runAsUser: -1
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects containerSecurityContext with unknown field
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      containerSecurityContext.notARealField: true
+    asserts:
+      - failedTemplate: {}

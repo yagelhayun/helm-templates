@@ -1,0 +1,251 @@
+suite: deployment — opt-in, replicas, strategy, labels
+templates:
+  - templates/deployment.yaml
+tests:
+
+  # ── Opt-in ───────────────────────────────────────────────────────────────────
+
+  - it: does not render when workload.type is not set
+    values:
+      - ../_shared/no-workload.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: does not render when workload.type is StatefulSet
+    values:
+      - ../statefulset/values.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a Deployment when workload.type is Deployment
+    values:
+      - ../_shared/common.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+
+  # ── Replicas / activeRegion ───────────────────────────────────────────────────
+
+  - it: uses 0 replicas when not in the active region
+    values:
+      - ../_shared/common.yaml
+    set:
+      global.region: us-west-1
+      # activeRegion=us-east-1 (from common.yaml) ≠ us-west-1 → 0 replicas
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 0
+
+  - it: uses configured replicas when in the active region
+    values:
+      - ../_shared/common.yaml
+    # global.region=us-east-1 == activeRegion=us-east-1, replicas=1
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+
+  - it: adds checksum annotation to pod template when configMap data is defined
+    values:
+      - ../_shared/common.yaml
+    set:
+      configMap.enabled: true
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations
+
+  # ── Strategy ─────────────────────────────────────────────────────────────────
+
+  - it: defaults to RollingUpdate with 25% maxUnavailable
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: RollingUpdate
+      - equal:
+          path: spec.strategy.rollingUpdate.maxUnavailable
+          value: "25%"
+      - equal:
+          path: spec.strategy.rollingUpdate.maxSurge
+          value: "25%"
+
+  - it: uses Recreate when configured
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      strategy.type: Recreate
+    asserts:
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+      - notExists:
+          path: spec.strategy.rollingUpdate
+
+  - it: uses custom maxSurge and maxUnavailable
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      strategy.maxUnavailable: "0"
+      strategy.maxSurge: 1
+    asserts:
+      - equal:
+          path: spec.strategy.rollingUpdate.maxUnavailable
+          value: "0"
+      - equal:
+          path: spec.strategy.rollingUpdate.maxSurge
+          value: "1"
+
+  # ── Labels ───────────────────────────────────────────────────────────────────
+
+  - it: renders standard app.kubernetes.io/name label
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: templates
+
+  - it: renders app.kubernetes.io/managed-by label
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/managed-by"]
+          value: Helm
+
+  - it: renders commit label when global.commit is set
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      global.commit: "abc1234"
+    asserts:
+      - equal:
+          path: metadata.labels.commit
+          value: "abc1234"
+
+  - it: omits commit label when global.commit is not set
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - notExists:
+          path: metadata.labels.commit
+
+  - it: merges custom labels into deployment metadata
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      labels.team: platform
+      labels.version: v2
+    asserts:
+      - equal:
+          path: metadata.labels.team
+          value: platform
+      - equal:
+          path: metadata.labels.version
+          value: v2
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects invalid workload.type
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      workload.type: Job
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects port of 0
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      port: 0
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects port above 65535
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      port: 65536
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects replicas below 0
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      replicas: -1
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects empty global.region
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      global.region: ""
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid image pullPolicy
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      image.pullPolicy: always
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema allows unknown root-level properties (custom config blocks)
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      unknownTopLevelKey: value
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: schema rejects invalid strategy.type
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      strategy.type: BlueGreen
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects negative strategy.partition
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      strategy.partition: -1
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects strategy.partition on Deployment
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      strategy.partition: 1
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects strategy.partition on DaemonSet
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      workload.type: DaemonSet
+      strategy.partition: 1
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects resources.limitMultiplier below 1
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      resources.limitMultiplier: 0.5
+    asserts:
+      - failedTemplate: {}

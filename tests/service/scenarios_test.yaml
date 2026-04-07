@@ -1,4 +1,4 @@
-suite: service opt-in and configuration
+suite: service — opt-in, types, and schema
 templates:
   - templates/service.yaml
 tests:
@@ -7,7 +7,7 @@ tests:
 
   - it: does not render when service.enabled is false
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.enabled: false
     asserts:
@@ -16,7 +16,7 @@ tests:
 
   - it: renders a Service when service.enabled is true
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     asserts:
       - hasDocuments:
           count: 1
@@ -27,7 +27,7 @@ tests:
 
   - it: exposes the configured port
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     asserts:
       - equal:
           path: spec.ports[0].port
@@ -35,7 +35,7 @@ tests:
 
   - it: uses portName for the named port
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     asserts:
       - equal:
           path: spec.ports[0].name
@@ -43,7 +43,7 @@ tests:
 
   - it: defaults port name to http when portName is not set
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       service.enabled: true
     asserts:
@@ -53,7 +53,7 @@ tests:
 
   - it: selector matches the common labels
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     asserts:
       - equal:
           path: spec.selector["app.kubernetes.io/name"]
@@ -63,7 +63,7 @@ tests:
 
   - it: defaults to ClusterIP when no type is set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     asserts:
       - equal:
           path: spec.type
@@ -73,7 +73,7 @@ tests:
 
   - it: renders NodePort type
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: NodePort
     asserts:
@@ -83,7 +83,7 @@ tests:
 
   - it: renders nodePort on the port entry when configured
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: NodePort
       service.nodePort.port: 30080
@@ -94,7 +94,7 @@ tests:
 
   - it: does not render nodePort field when not configured
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: NodePort
     asserts:
@@ -103,7 +103,7 @@ tests:
 
   - it: schema rejects nodePort object without type NodePort
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.nodePort.port: 30080
     asserts:
@@ -111,7 +111,7 @@ tests:
 
   - it: schema rejects nodePort object with type LoadBalancer
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
       service.nodePort.port: 30080
@@ -120,7 +120,7 @@ tests:
 
   - it: schema rejects nodePort.port below 30000
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: NodePort
       service.nodePort.port: 80
@@ -129,7 +129,7 @@ tests:
 
   - it: schema rejects nodePort.port above 32767
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: NodePort
       service.nodePort.port: 40000
@@ -140,7 +140,7 @@ tests:
 
   - it: renders LoadBalancer type
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
     asserts:
@@ -150,7 +150,7 @@ tests:
 
   - it: renders loadBalancerIP when set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
       service.loadBalancer.ip: "1.2.3.4"
@@ -161,7 +161,7 @@ tests:
 
   - it: renders loadBalancerSourceRanges when set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
       service.loadBalancer.sourceRanges[0]: "10.0.0.0/8"
@@ -172,7 +172,7 @@ tests:
 
   - it: renders loadBalancerClass when set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
       service.loadBalancer.class: "cloud.google.com/load-balancer-type"
@@ -183,7 +183,7 @@ tests:
 
   - it: renders allocateLoadBalancerNodePorts as true
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
       service.loadBalancer.nodePort.shouldAllocatePorts: true
@@ -194,7 +194,7 @@ tests:
 
   - it: renders allocateLoadBalancerNodePorts as false
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
       service.loadBalancer.nodePort.shouldAllocatePorts: false
@@ -205,7 +205,7 @@ tests:
 
   - it: does not render allocateLoadBalancerNodePorts when not set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
     asserts:
@@ -214,7 +214,7 @@ tests:
 
   - it: renders healthCheckNodePort when set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
       service.loadBalancer.nodePort.healthCheckPort: 31000
@@ -225,7 +225,7 @@ tests:
 
   - it: schema rejects loadBalancer object without type LoadBalancer
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.loadBalancer.ip: "1.2.3.4"
     asserts:
@@ -233,7 +233,7 @@ tests:
 
   - it: schema rejects loadBalancer object with type NodePort
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: NodePort
       service.loadBalancer.ip: "1.2.3.4"
@@ -242,7 +242,7 @@ tests:
 
   - it: schema rejects healthCheckPort below 30000
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
       service.loadBalancer.nodePort.healthCheckPort: 1000
@@ -253,7 +253,7 @@ tests:
 
   - it: renders ExternalName type with externalName host
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: ExternalName
       service.externalName.host: "my.example.com"
@@ -267,7 +267,7 @@ tests:
 
   - it: does not render ports or selector for ExternalName
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: ExternalName
       service.externalName.host: "my.example.com"
@@ -279,7 +279,7 @@ tests:
 
   - it: schema rejects externalName object without type ExternalName
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.externalName.host: "my.example.com"
     asserts:
@@ -287,7 +287,7 @@ tests:
 
   - it: schema rejects externalName object with type LoadBalancer
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
       service.externalName.host: "my.example.com"
@@ -296,7 +296,7 @@ tests:
 
   - it: schema rejects externalName.host as empty string
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: ExternalName
       service.externalName.host: ""
@@ -307,7 +307,7 @@ tests:
 
   - it: renders internalTrafficPolicy when set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.trafficPolicy.internal: Local
     asserts:
@@ -317,7 +317,7 @@ tests:
 
   - it: renders externalTrafficPolicy when set on NodePort
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: NodePort
       service.trafficPolicy.external: Local
@@ -328,7 +328,7 @@ tests:
 
   - it: renders externalTrafficPolicy when set on LoadBalancer
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
       service.trafficPolicy.external: Cluster
@@ -339,7 +339,7 @@ tests:
 
   - it: renders both internal and external trafficPolicy together
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: NodePort
       service.trafficPolicy.internal: Local
@@ -354,7 +354,7 @@ tests:
 
   - it: schema rejects external trafficPolicy on ClusterIP
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.trafficPolicy.external: Local
     asserts:
@@ -362,7 +362,7 @@ tests:
 
   - it: schema rejects external trafficPolicy on ExternalName
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: ExternalName
       service.externalName.host: "my.example.com"
@@ -372,7 +372,7 @@ tests:
 
   - it: schema rejects invalid trafficPolicy value
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: NodePort
       service.trafficPolicy.external: Invalid
@@ -383,7 +383,7 @@ tests:
 
   - it: renders sessionAffinity type
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.sessionAffinity.type: ClientIP
     asserts:
@@ -393,7 +393,7 @@ tests:
 
   - it: renders sessionAffinityConfig when config is provided
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.sessionAffinity.type: ClientIP
       service.sessionAffinity.config.clientIP.timeoutSeconds: 3600
@@ -404,7 +404,7 @@ tests:
 
   - it: does not render sessionAffinityConfig when config is absent
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.sessionAffinity.type: ClientIP
     asserts:
@@ -413,7 +413,7 @@ tests:
 
   - it: schema rejects sessionAffinity config without type ClientIP
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.sessionAffinity.type: None
       service.sessionAffinity.config.clientIP.timeoutSeconds: 3600
@@ -422,7 +422,7 @@ tests:
 
   - it: schema rejects sessionAffinity config without any type set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.sessionAffinity.config.clientIP.timeoutSeconds: 3600
     asserts:
@@ -430,7 +430,7 @@ tests:
 
   - it: schema rejects sessionAffinityConfig timeoutSeconds above 86400
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.sessionAffinity.type: ClientIP
       service.sessionAffinity.config.clientIP.timeoutSeconds: 99999
@@ -441,7 +441,7 @@ tests:
 
   - it: renders publishNotReadyAddresses as true when set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.publishNotReadyAddresses: true
     asserts:
@@ -451,7 +451,7 @@ tests:
 
   - it: renders publishNotReadyAddresses as false when explicitly set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.publishNotReadyAddresses: false
     asserts:
@@ -461,7 +461,7 @@ tests:
 
   - it: does not render publishNotReadyAddresses when not set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     asserts:
       - notExists:
           path: spec.publishNotReadyAddresses
@@ -470,7 +470,7 @@ tests:
 
   - it: renders externalIPs when set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.externalIPs[0]: "1.2.3.4"
     asserts:
@@ -480,7 +480,7 @@ tests:
 
   - it: does not render externalIPs when not set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     asserts:
       - notExists:
           path: spec.externalIPs
@@ -489,7 +489,7 @@ tests:
 
   - it: renders ipFamilyPolicy when set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.ipFamily.policy: PreferDualStack
     asserts:
@@ -499,7 +499,7 @@ tests:
 
   - it: renders ipFamilies when set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.ipFamily.families[0]: IPv4
     asserts:
@@ -509,7 +509,7 @@ tests:
 
   - it: renders both policy and families together
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.ipFamily.policy: RequireDualStack
       service.ipFamily.families[0]: IPv6
@@ -523,7 +523,7 @@ tests:
 
   - it: schema rejects invalid ipFamilyPolicy value
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.ipFamily.policy: DualStack
     asserts:
@@ -531,7 +531,7 @@ tests:
 
   - it: schema rejects invalid ipFamilies value
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.ipFamily.families[0]: IPv5
     asserts:
@@ -541,7 +541,7 @@ tests:
 
   - it: renders clusterIP None for a headless service
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.clusterIP: None
     asserts:
@@ -553,7 +553,7 @@ tests:
 
   - it: renders appProtocol on the port when set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.appProtocol: kubernetes.io/h2c
     asserts:
@@ -563,7 +563,7 @@ tests:
 
   - it: does not render appProtocol when not set
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     asserts:
       - notExists:
           path: spec.ports[0].appProtocol
@@ -572,7 +572,7 @@ tests:
 
   - it: schema rejects an unknown service type
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     set:
       service.type: Headless
     asserts:

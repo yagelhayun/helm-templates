@@ -1,33 +1,38 @@
-suite: DaemonSet opt-in and behavior
+suite: DaemonSet — opt-in, behavior, and schema
 templates:
   - templates/daemonset.yaml
 tests:
+
+  # ── Opt-in ───────────────────────────────────────────────────────────────────
+
   - it: does not render when workload.type is not DaemonSet
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     asserts:
       - hasDocuments:
           count: 0
 
   - it: renders a DaemonSet when workload.type is DaemonSet
     values:
-      - ../test-values/daemonset.values.yaml
+      - ./values.yaml
     asserts:
       - hasDocuments:
           count: 1
       - isKind:
           of: DaemonSet
 
+  # ── Behavior ─────────────────────────────────────────────────────────────────
+
   - it: does not have a replicas field
     values:
-      - ../test-values/daemonset.values.yaml
+      - ./values.yaml
     asserts:
       - notExists:
           path: spec.replicas
 
   - it: defaults updateStrategy to RollingUpdate
     values:
-      - ../test-values/daemonset.values.yaml
+      - ./values.yaml
     asserts:
       - equal:
           path: spec.updateStrategy.type
@@ -35,7 +40,7 @@ tests:
 
   - it: defaults updateStrategy maxUnavailable to 25%
     values:
-      - ../test-values/daemonset.values.yaml
+      - ./values.yaml
     asserts:
       - equal:
           path: spec.updateStrategy.rollingUpdate.maxUnavailable
@@ -43,7 +48,7 @@ tests:
 
   - it: uses OnDelete updateStrategy when configured
     values:
-      - ../test-values/daemonset.values.yaml
+      - ./values.yaml
     set:
       strategy.type: OnDelete
     asserts:
@@ -55,7 +60,7 @@ tests:
 
   - it: renders the container with the correct image
     values:
-      - ../test-values/daemonset.values.yaml
+      - ./values.yaml
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
@@ -63,7 +68,7 @@ tests:
 
   - it: renders the container port
     values:
-      - ../test-values/daemonset.values.yaml
+      - ./values.yaml
     asserts:
       - equal:
           path: spec.template.spec.containers[0].ports[0].containerPort
@@ -73,7 +78,7 @@ tests:
 
   - it: schema rejects hpa.enabled true for DaemonSet workload
     values:
-      - ../test-values/daemonset.values.yaml
+      - ./values.yaml
     set:
       hpa.enabled: true
       hpa.maxReplicas: 5

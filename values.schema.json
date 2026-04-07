@@ -29,8 +29,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "name":   { "type": "string" },
-        "create": { "type": "boolean" }
+        "name":             { "type": "string" },
+        "create":           { "type": "boolean" },
+        "imagePullSecrets": { "type": "array", "items": { "type": "string" } }
       }
     },
     "terminationGracePeriodSeconds":{ "type": "integer", "minimum": 0 },

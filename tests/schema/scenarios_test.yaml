@@ -2,9 +2,12 @@ suite: schema — custom root-level and global properties
 templates:
   - templates/configmap.yaml
 tests:
+
+  # ── Root-level custom keys ───────────────────────────────────────────────────
+
   - it: allows arbitrary top-level keys (custom config block)
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       configMap.enabled: false
       customConfig.url: "https://example.com"
@@ -15,7 +18,7 @@ tests:
 
   - it: allows multiple unrelated top-level keys
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       configMap.enabled: false
       myServiceConfig.timeout: "30s"
@@ -27,7 +30,7 @@ tests:
 
   - it: custom root key can be referenced in configMap data via template
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       configMap.enabled: true
       configMap.data.APP_PORT: "8080"
@@ -42,7 +45,7 @@ tests:
 
   - it: allows arbitrary keys inside global (shared config block)
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       configMap.enabled: false
       global.sharedConfig.baseUrl: "https://api.example.com"
@@ -53,7 +56,7 @@ tests:
 
   - it: global custom key is accessible in configMap data via template
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       configMap.enabled: true
       configMap.data.BASE_URL: "{{ .Values.global.sharedConfig.baseUrl }}"
@@ -64,20 +67,20 @@ tests:
       - isKind:
           of: ConfigMap
 
+  # ── Nested object enforcement still applies ──────────────────────────────────
+
   - it: schema still rejects unknown keys inside global.image
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       global.image.url: myrepo/base
       global.image.unknownKey: value
     asserts:
       - failedTemplate: {}
 
-  # ── nested object enforcement still applies ──────────────────────────────────
-
   - it: schema still rejects unknown keys inside known objects (configMap)
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       configMap.enabled: false
       configMap.unknownKey: value
@@ -86,7 +89,7 @@ tests:
 
   - it: schema still rejects unknown keys inside resources
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       resources.unknownKey: value
     asserts:

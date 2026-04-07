@@ -1,26 +1,31 @@
-suite: StatefulSet opt-in and behavior
+suite: StatefulSet — opt-in, behavior, and schema
 templates:
   - templates/statefulset.yaml
 tests:
+
+  # ── Opt-in ───────────────────────────────────────────────────────────────────
+
   - it: does not render when workload.type is not StatefulSet
     values:
-      - ../test-values/common.values.yaml
+      - ../_shared/common.yaml
     asserts:
       - hasDocuments:
           count: 0
 
   - it: renders a StatefulSet when workload.type is StatefulSet
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     asserts:
       - hasDocuments:
           count: 1
       - isKind:
           of: StatefulSet
 
+  # ── Behavior ─────────────────────────────────────────────────────────────────
+
   - it: sets serviceName from statefulSet.headlessService
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     asserts:
       - equal:
           path: spec.serviceName
@@ -28,7 +33,7 @@ tests:
 
   - it: defaults podManagementPolicy to OrderedReady
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     asserts:
       - equal:
           path: spec.podManagementPolicy
@@ -36,7 +41,7 @@ tests:
 
   - it: uses Parallel podManagementPolicy when configured
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     set:
       statefulSet.podManagementPolicy: Parallel
     asserts:
@@ -46,7 +51,7 @@ tests:
 
   - it: defaults updateStrategy to RollingUpdate
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     asserts:
       - equal:
           path: spec.updateStrategy.type
@@ -54,7 +59,7 @@ tests:
 
   - it: uses OnDelete updateStrategy when configured via strategy.type
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     set:
       strategy.type: OnDelete
     asserts:
@@ -66,7 +71,7 @@ tests:
 
   - it: renders partition in updateStrategy when set via strategy.partition
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     set:
       strategy.partition: 2
     asserts:
@@ -76,7 +81,7 @@ tests:
 
   - it: renders volumeClaimTemplates
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     asserts:
       - equal:
           path: spec.volumeClaimTemplates[0].metadata.name
@@ -90,7 +95,7 @@ tests:
 
   - it: uses 0 replicas when activeRegion does not match
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     set:
       activeRegion: us-west-1
       global.region: us-east-1
@@ -101,7 +106,7 @@ tests:
 
   - it: defaults revisionHistoryLimit to 1
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     asserts:
       - equal:
           path: spec.revisionHistoryLimit
@@ -111,7 +116,7 @@ tests:
 
   - it: schema rejects StatefulSet workload without statefulSet block
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       workload.type: StatefulSet
     asserts:
@@ -119,7 +124,7 @@ tests:
 
   - it: schema rejects empty statefulSet.headlessService
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     set:
       statefulSet.headlessService: ""
     asserts:
@@ -127,7 +132,7 @@ tests:
 
   - it: schema rejects invalid podManagementPolicy
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     set:
       statefulSet.podManagementPolicy: Random
     asserts:
@@ -135,7 +140,7 @@ tests:
 
   - it: schema rejects volumeClaimTemplate without name
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       workload.type: StatefulSet
       statefulSet.headlessService: myapp-headless
@@ -145,7 +150,7 @@ tests:
 
   - it: schema rejects volumeClaimTemplate without size
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       workload.type: StatefulSet
       statefulSet.headlessService: myapp-headless
@@ -155,7 +160,7 @@ tests:
 
   - it: schema rejects invalid accessMode in volumeClaimTemplate
     values:
-      - ../test-values/statefulset.values.yaml
+      - ./values.yaml
     set:
       statefulSet.volumeClaimTemplates[0].accessMode: ReadOnly
     asserts:

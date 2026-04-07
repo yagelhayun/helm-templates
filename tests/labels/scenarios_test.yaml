@@ -2,9 +2,10 @@ suite: labels — standard, commit, and custom
 templates:
   - templates/deployment.yaml
 tests:
+
   - it: renders standard app.kubernetes.io/name label
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     asserts:
       - equal:
           path: metadata.labels["app.kubernetes.io/name"]
@@ -12,7 +13,7 @@ tests:
 
   - it: renders app.kubernetes.io/managed-by label
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     asserts:
       - equal:
           path: metadata.labels["app.kubernetes.io/managed-by"]
@@ -20,7 +21,7 @@ tests:
 
   - it: renders commit label when global.commit is set
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       global.commit: "abc1234"
     asserts:
@@ -30,14 +31,14 @@ tests:
 
   - it: omits commit label when global.commit is not set
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     asserts:
       - notExists:
           path: metadata.labels.commit
 
   - it: merges custom labels into deployment metadata
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       labels.team: platform
       labels.version: v2
@@ -53,7 +54,7 @@ tests:
 
   - it: schema allows unknown root-level properties (custom config blocks)
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       unknownTopLevelKey: value
     asserts:
@@ -62,7 +63,7 @@ tests:
 
   - it: schema rejects empty global.region
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       global.region: ""
     asserts:
@@ -70,7 +71,7 @@ tests:
 
   - it: schema rejects resources.limitMultiplier below 1
     values:
-      - ../test-values/minimal.values.yaml
+      - ../_shared/minimal.yaml
     set:
       resources.limitMultiplier: 0.5
     asserts:

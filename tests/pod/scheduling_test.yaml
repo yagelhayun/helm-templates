@@ -1,0 +1,241 @@
+suite: pod — topology, nodeSelector, tolerations, affinity
+templates:
+  - templates/deployment.yaml
+tests:
+
+  # ── topologySpreadConstraints ─────────────────────────────────────────────────
+
+  - it: renders default topology spread constraints when not configured
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.topologySpreadConstraints
+          content:
+            maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: templates
+      - contains:
+          path: spec.template.spec.topologySpreadConstraints
+          content:
+            maxSkew: 1
+            topologyKey: topology.kubernetes.io/zone
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: templates
+
+  - it: omits topologySpreadConstraints when set to empty list
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      topologySpreadConstraints: []
+    asserts:
+      - notExists:
+          path: spec.template.spec.topologySpreadConstraints
+
+  - it: renders custom topology spread constraint
+    values:
+      - ./custom-topology.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].maxSkew
+          value: 2
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].whenUnsatisfiable
+          value: DoNotSchedule
+
+  # ── nodeSelector ─────────────────────────────────────────────────────────────
+
+  - it: renders nodeSelector
+    values:
+      - ./scheduling.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+
+  - it: omits nodeSelector when not set
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.nodeSelector
+
+  # ── tolerations ───────────────────────────────────────────────────────────────
+
+  - it: renders tolerations
+    values:
+      - ./scheduling.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: dedicated
+            operator: Equal
+            value: gpu
+            effect: NoSchedule
+
+  - it: renders toleration with tolerationSeconds
+    values:
+      - ./scheduling.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations[1].tolerationSeconds
+          value: 300
+
+  - it: omits tolerations when not set
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.tolerations
+
+  # ── affinity ──────────────────────────────────────────────────────────────────
+
+  - it: maps nodeAffinity.required to requiredDuringSchedulingIgnoredDuringExecution
+    values:
+      - ./scheduling.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: topology.kubernetes.io/zone
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator
+          value: In
+      - contains:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values
+          content: us-east-1a
+
+  - it: maps nodeAffinity.preferred to preferredDuringSchedulingIgnoredDuringExecution
+    values:
+      - ./scheduling.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 50
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].preference.matchExpressions[0].key
+          value: kubernetes.io/arch
+
+  - it: maps podAntiAffinity.preferred and injects labelSelector
+    values:
+      - ./scheduling.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].weight
+          value: 100
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.topologyKey
+          value: kubernetes.io/hostname
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchLabels["app.kubernetes.io/name"]
+          value: templates
+
+  - it: maps podAntiAffinity.required and injects labelSelector
+    values:
+      - ./scheduling.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].topologyKey
+          value: topology.kubernetes.io/zone
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[0].labelSelector.matchLabels["app.kubernetes.io/name"]
+          value: templates
+
+  - it: omits affinity when not set
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.affinity
+
+  # ── Schema validation ────────────────────────────────────────────────────────
+
+  - it: schema rejects unknown field in affinity.nodeAffinity
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      affinity.nodeAffinity.badField: foo
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects unknown field in affinity.podAntiAffinity
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      affinity.podAntiAffinity.badField: foo
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid nodeAffinity matchExpression operator
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      affinity.nodeAffinity.required[0].key: foo
+      affinity.nodeAffinity.required[0].operator: BadOp
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects podAntiAffinity preferred entry missing topologyKey
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      affinity.podAntiAffinity.preferred[0].weight: 100
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects nodeAffinity with neither required nor preferred
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      affinity.nodeAffinity: {}
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects podAntiAffinity with neither required nor preferred
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      affinity.podAntiAffinity: {}
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects topologySpreadConstraints maxSkew below 1
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      topologySpreadConstraints[0].maxSkew: 0
+      topologySpreadConstraints[0].topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints[0].whenUnsatisfiable: ScheduleAnyway
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid topologySpreadConstraints whenUnsatisfiable
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      topologySpreadConstraints[0].maxSkew: 1
+      topologySpreadConstraints[0].topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints[0].whenUnsatisfiable: Never
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid toleration operator
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      tolerations[0].operator: Invalid
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid toleration effect
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      tolerations[0].effect: BadEffect
+    asserts:
+      - failedTemplate: {}
