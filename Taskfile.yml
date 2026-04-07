@@ -1,11 +1,6 @@
 version: '3'
 
 tasks:
-  setup:
-    desc: "Package helm-core and inject it into helm-templates/charts/ for local development"
-    cmds:
-      - rm -rf charts/*
-
   lint:
     desc: Lint the chart (validates structure and JSON schema)
     cmds:
