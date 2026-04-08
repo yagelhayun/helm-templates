@@ -1,0 +1,194 @@
+suite: pod — volumes (emptyDirs, pvcs, hostPaths, hostAliases)
+templates:
+  - templates/deployment.yaml
+tests:
+
+  # ── emptyDirs ─────────────────────────────────────────────────────────────────
+
+  - it: renders emptyDir volume
+    values:
+      - ./volumes.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: tmp-data
+            emptyDir: {}
+
+  - it: mounts emptyDir into container
+    values:
+      - ./volumes.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: tmp-data
+            mountPath: /tmp/data
+
+  - it: schema rejects unknown field in emptyDirs entry
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      volumes.emptyDirs.scratch.mountPath: /tmp
+      volumes.emptyDirs.scratch.unknownField: bad
+    asserts:
+      - failedTemplate: {}
+
+  # ── pvcs ──────────────────────────────────────────────────────────────────────
+
+  - it: renders PVC volume
+    values:
+      - ./volumes.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: my-pvc
+            persistentVolumeClaim:
+              claimName: my-pvc
+
+  - it: mounts PVC into container
+    values:
+      - ./volumes.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: my-pvc
+            mountPath: /data
+
+  - it: renders readOnly PVC volume
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      global.ignoreLookup: "true"
+      volumes.pvcs.my-pvc.mountPath: /data
+      volumes.pvcs.my-pvc.readOnly: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: my-pvc
+            persistentVolumeClaim:
+              claimName: my-pvc
+              readOnly: true
+
+  - it: schema rejects pvcs entry without mountPath
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      global.ignoreLookup: "true"
+      volumes.pvcs.my-pvc.readOnly: true
+    asserts:
+      - failedTemplate: {}
+
+  # ── hostPaths ─────────────────────────────────────────────────────────────────
+
+  - it: renders hostPath volume with type
+    values:
+      - ./volumes.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: host-logs
+            hostPath:
+              path: /var/log
+              type: Directory
+
+  - it: mounts hostPath into container
+    values:
+      - ./volumes.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: host-logs
+            mountPath: /host/log
+
+  - it: renders hostPath volume without type
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      volumes.hostPaths.host-proc.hostPath: /proc
+      volumes.hostPaths.host-proc.mountPath: /host/proc
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: host-proc
+            hostPath:
+              path: /proc
+
+  - it: schema rejects hostPaths entry without hostPath
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      volumes.hostPaths.host-proc.mountPath: /host/proc
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects hostPaths entry without mountPath
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      volumes.hostPaths.host-proc.hostPath: /proc
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects invalid hostPath type
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      volumes.hostPaths.host-proc.hostPath: /proc
+      volumes.hostPaths.host-proc.mountPath: /host/proc
+      volumes.hostPaths.host-proc.type: InvalidType
+    asserts:
+      - failedTemplate: {}
+
+  # ── hostAliases ───────────────────────────────────────────────────────────────
+
+  - it: renders hostAliases in pod spec
+    values:
+      - ./volumes.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.hostAliases
+          content:
+            ip: "192.168.1.100"
+            hostnames:
+              - foo.local
+              - bar.local
+
+  - it: omits hostAliases when not set
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.hostAliases
+
+  - it: schema rejects hostAlias entry without ip
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      hostAliases[0].hostnames[0]: foo.local
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects hostAlias entry without hostnames
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      hostAliases[0].ip: "10.0.0.1"
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects unknown field in hostAliases entry
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      hostAliases[0].ip: "10.0.0.1"
+      hostAliases[0].hostnames[0]: foo.local
+      hostAliases[0].unknownField: bad
+    asserts:
+      - failedTemplate: {}

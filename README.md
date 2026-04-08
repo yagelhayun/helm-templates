@@ -92,7 +92,7 @@ global:
     secrets:
       platform-secret:
         mountPath: /run/secrets
-    empty:
+    emptyDirs:
       tmp-scratch: {}
   env:
     secrets:
@@ -159,13 +159,18 @@ volumes:
   configMaps:
     my-config:
       mountPath: /etc/config
-  empty:
+  emptyDirs:
     scratch:
       mountPath: /tmp/scratch
-  persistentVolumeClaims:
+  pvcs:
     my-pvc:
       mountPath: /data
       readOnly: false
+  hostPaths:
+    host-logs:
+      hostPath: /var/log
+      mountPath: /host/log
+      type: Directory            # optional
 ```
 
 ### Environment
@@ -450,6 +455,18 @@ affinity:
 priorityClassName: high-priority
 ```
 
+### Host aliases
+
+Adds custom entries to `/etc/hosts` inside all pod containers.
+
+```yaml
+hostAliases:
+  - ip: "192.168.1.100"
+    hostnames:
+      - legacy.internal
+      - old-api.local
+```
+
 ### Security
 
 `podSecurityContext` applies to all containers in the pod. `containerSecurityContext` applies to the main container only. To set a security context on a sidecar or init container, add `containerSecurityContext` inside that container's spec.
@@ -605,8 +622,6 @@ Works as normal — ArgoCD and Flux both invoke `helm template` before applying,
 ### Cluster lookups
 
 ArgoCD and Flux render charts via `helm template`, which causes `core.isRealDeployment` to return `false`. This means **cluster lookups are silently skipped** at render time — the library will not verify that referenced Secrets, ConfigMaps, or PVCs exist before the manifests are applied.
-
-The failure only surfaces later, when a pod can't start because a referenced resource is missing.
 
 ### Mitigation options
 

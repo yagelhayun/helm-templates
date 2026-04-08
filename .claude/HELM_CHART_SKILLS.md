@@ -32,7 +32,7 @@ service.*          — enable/disable Service
 cronJob.*          — enable/disable and configure CronJob
 hpa.*              — enable/disable and configure HPA
 probes.*           — readiness / liveness / startup probes
-volumes.*          — volumes to mount
+volumes.*          — volumes to mount (secrets, configMaps, emptyDirs, pvcs, hostPaths)
 envFrom.*          — bulk environment from ConfigMaps/Secrets
 env.*              — individual env vars from ConfigMap/Secret keys
 initContainers     — init container list
@@ -196,9 +196,27 @@ volumes:
       files:                     # mount specific keys as individual files
         - db-password
         - api-key
-  empty:
+  emptyDirs:
     tmp-upload:
       mountPath: /tmp/uploads    # emptyDir
+  pvcs:
+    shared-data:
+      mountPath: /data
+      readOnly: false            # optional
+  hostPaths:
+    host-logs:
+      hostPath: /var/log         # path on the host node
+      mountPath: /host/log       # path inside the container
+      type: Directory            # optional: DirectoryOrCreate | Directory | FileOrCreate | File | Socket | CharDevice | BlockDevice
+  pvcs:
+    shared-data:
+      mountPath: /data
+      readOnly: false            # optional
+  hostPaths:
+    host-logs:
+      hostPath: /var/log         # path on the host node
+      mountPath: /host/log       # path inside the container
+      type: Directory            # optional: DirectoryOrCreate | Directory | FileOrCreate | File | Socket | CharDevice | BlockDevice
 
 envFrom:
   configMaps:
@@ -311,6 +329,11 @@ containerSecurityContext:
     drop: [ALL]
 
 priorityClassName: high-priority       # PriorityClass must exist in the cluster
+
+hostAliases:
+  - ip: 192.168.1.100
+    hostnames:
+      - legacy.internal       # added to /etc/hosts in all containers
 
 labels:
   team: backend
@@ -431,6 +454,12 @@ volumes:
 # /run/tls/tls.key  (subPath: tls.key)
 ```
 
+### Mount a host path (DaemonSets / node-level access)
+
+\
+### Add custom /etc/hosts entries (hostAliases)
+
+\
 ### Configure a startup probe for a slow-starting service
 
 ```yaml
@@ -584,6 +613,7 @@ rawManifests:
 
 ## What NOT to do
 
+- `volumes` sub-keys are `secrets`, `configMaps`, `emptyDirs`, `pvcs`, `hostPaths` — the old `empty` and `persistentVolumeClaims` keys are removed
 - Do not use the old `port` (integer) or `portName` (string) top-level keys — they are removed. Use `ports` map instead.
 - Do not add keys not listed in this document — they will be rejected by schema validation.
 - Do not set `hpa.enabled: true` and `activeRegion` together.

@@ -53,6 +53,9 @@ spec:
       {{- with (include "core.pod.tolerations" $context) }}
       tolerations: {{ . | nindent 8 }}
       {{- end }}
+      {{- with (include "core.pod.hostAliases" $context) }}
+      hostAliases: {{ . | nindent 8 }}
+      {{- end }}
       {{- with (include "core.pod.securityContext" $context) }}
       securityContext: {{ . | nindent 8 }}
       {{- end }}

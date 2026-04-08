@@ -93,7 +93,7 @@ tests:
       - ../_shared/minimal.yaml
     set:
       global.ignoreLookup: "true"
-      volumes.persistentVolumeClaims.my-data.mountPath: /data
+      volumes.pvcs.my-data.mountPath: /data
     asserts:
       - contains:
           path: spec.template.spec.volumes
@@ -109,8 +109,8 @@ tests:
       - ../_shared/minimal.yaml
     set:
       global.ignoreLookup: "true"
-      volumes.persistentVolumeClaims.my-data.mountPath: /data
-      volumes.persistentVolumeClaims.my-data.readOnly: true
+      volumes.pvcs.my-data.mountPath: /data
+      volumes.pvcs.my-data.readOnly: true
     asserts:
       - contains:
           path: spec.template.spec.volumes
@@ -127,7 +127,7 @@ tests:
       - ../_shared/minimal.yaml
     set:
       global.ignoreLookup: "true"
-      volumes.persistentVolumeClaims.my-data.mountPath: /data
+      volumes.pvcs.my-data.mountPath: /data
     asserts:
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
@@ -165,6 +165,6 @@ tests:
       - ../_shared/minimal.yaml
     set:
       global.ignoreLookup: "true"
-      volumes.persistentVolumeClaims.my-data.readOnly: true
+      volumes.pvcs.my-data.readOnly: true
     asserts:
       - failedTemplate: {}
