@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "resourcesConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cpu",
+        "memory"
+      ],
+      "properties": {
+        "cpu": {
+          "type": [
+            "string",
+            "number"
+          ]
+        },
+        "memory": {
+          "type": "string"
+        },
+        "limitMultiplier": {
+          "type": "number",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

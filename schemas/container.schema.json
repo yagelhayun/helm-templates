@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "containerSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "image": {
+          "$ref": "./image.schema.json#/definitions/imageConfig"
+        },
+        "ports": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "./image.schema.json#/definitions/containerPortConfig"
+          }
+        },
+        "command": {
+          "type": "array"
+        },
+        "args": {
+          "type": "array"
+        },
+        "envFrom": {
+          "$ref": "./env.schema.json#/definitions/envFromConfig"
+        },
+        "env": {
+          "$ref": "./env.schema.json#/definitions/envConfig"
+        },
+        "resources": {
+          "$ref": "./resources.schema.json#/definitions/resourcesConfig"
+        },
+        "volumes": {
+          "$ref": "./volumes.schema.json#/definitions/volumesConfig"
+        },
+        "probes": {
+          "$ref": "./probes.schema.json#/definitions/probesConfig"
+        },
+        "containerSecurityContext": {
+          "$ref": "./security.schema.json#/definitions/containerSecurityContextConfig"
+        }
+      }
+    }
+  }
+}

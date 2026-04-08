@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "probeSpec": {
+      "type": "object",
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "title": "httpGet probe",
+          "required": [
+            "httpGet"
+          ],
+          "not": {
+            "required": [
+              "exec"
+            ]
+          }
+        },
+        {
+          "title": "exec probe",
+          "required": [
+            "exec"
+          ],
+          "not": {
+            "required": [
+              "httpGet"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "httpGet": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "scheme": {
+              "type": "string",
+              "enum": [
+                "HTTP",
+                "HTTPS"
+              ]
+            }
+          }
+        },
+        "exec": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "command"
+          ],
+          "properties": {
+            "command": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "initialDelaySeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "periodSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "successThreshold": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "probesConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "readiness": {
+          "$ref": "#/definitions/probeSpec"
+        },
+        "liveness": {
+          "$ref": "#/definitions/probeSpec"
+        },
+        "startup": {
+          "$ref": "#/definitions/probeSpec"
+        }
+      }
+    }
+  }
+}

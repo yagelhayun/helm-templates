@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "seccompProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "RuntimeDefault",
+            "Unconfined",
+            "Localhost"
+          ]
+        },
+        "localhostProfile": {
+          "type": "string"
+        }
+      }
+    },
+    "podSecurityContextConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runAsNonRoot": {
+          "type": "boolean"
+        },
+        "runAsUser": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fsGroup": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fsGroupChangePolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "OnRootMismatch"
+          ]
+        },
+        "supplementalGroups": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "sysctls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "seccompProfile": {
+          "$ref": "#/definitions/seccompProfile"
+        }
+      }
+    },
+    "containerSecurityContextConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "readOnlyRootFilesystem": {
+          "type": "boolean"
+        },
+        "allowPrivilegeEscalation": {
+          "type": "boolean"
+        },
+        "privileged": {
+          "type": "boolean"
+        },
+        "runAsNonRoot": {
+          "type": "boolean"
+        },
+        "runAsUser": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "capabilities": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "add": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "drop": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "seccompProfile": {
+          "$ref": "#/definitions/seccompProfile"
+        },
+        "procMount": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

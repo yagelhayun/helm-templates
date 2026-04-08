@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "imageConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        },
+        "pullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "portConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "port"
+      ],
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "appProtocol": {
+          "type": "string"
+        },
+        "nodePort": {
+          "type": "integer",
+          "minimum": 30000,
+          "maximum": 32767
+        }
+      }
+    },
+    "containerPortConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "port"
+      ],
+      "properties": {
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    }
+  }
+}

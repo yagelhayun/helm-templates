@@ -1,0 +1,287 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "workloadConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "Deployment",
+            "StatefulSet",
+            "DaemonSet"
+          ]
+        }
+      }
+    },
+    "statefulSetConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "headlessService"
+      ],
+      "properties": {
+        "headlessService": {
+          "type": "string",
+          "minLength": 1
+        },
+        "podManagementPolicy": {
+          "type": "string",
+          "enum": [
+            "OrderedReady",
+            "Parallel"
+          ]
+        },
+        "volumeClaimTemplates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/volumeClaimTemplate"
+          }
+        }
+      }
+    },
+    "volumeClaimTemplate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "size"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "storageClass": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string"
+        },
+        "accessMode": {
+          "type": "string",
+          "enum": [
+            "ReadWriteOnce",
+            "ReadWriteMany",
+            "ReadOnlyMany"
+          ]
+        }
+      }
+    },
+    "strategyConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "RollingUpdate",
+            "Recreate",
+            "OnDelete"
+          ]
+        },
+        "maxUnavailable": {
+          "type": [
+            "string",
+            "integer"
+          ]
+        },
+        "maxSurge": {
+          "type": [
+            "string",
+            "integer"
+          ]
+        },
+        "partition": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "hpaMetric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "averageUtilization"
+      ],
+      "properties": {
+        "averageUtilization": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 99
+        }
+      }
+    },
+    "hpaConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cpu": {
+              "$ref": "#/definitions/hpaMetric"
+            },
+            "memory": {
+              "$ref": "#/definitions/hpaMetric"
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "title": "hpa.maxReplicas is required when hpa is enabled",
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "required": [
+              "maxReplicas"
+            ]
+          }
+        }
+      ]
+    },
+    "pdbConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "minAvailable": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "maxUnavailable": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "title": "pdb.minAvailable or pdb.maxUnavailable is required when pdb is enabled",
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "minAvailable"
+                ]
+              },
+              {
+                "required": [
+                  "maxUnavailable"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "cronJobConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "suspend": {
+          "type": "boolean"
+        },
+        "schedule": {
+          "type": "string",
+          "pattern": "^(@(annually|daily|hourly|midnight|monthly|weekly|yearly)|[0-9*/,\\-]+ [0-9*/,\\-]+ [0-9*/,\\-]+ [0-9*/,\\-]+ [0-9*/,\\-]+)$"
+        },
+        "concurrencyPolicy": {
+          "type": "string",
+          "enum": [
+            "Allow",
+            "Forbid",
+            "Replace"
+          ]
+        },
+        "successfulJobsHistory": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "failedJobsHistory": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "entrypoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "command": {
+              "type": "array"
+            },
+            "args": {
+              "type": "array"
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "title": "cronJob.schedule is required when cronJob is enabled",
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "required": [
+              "schedule"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

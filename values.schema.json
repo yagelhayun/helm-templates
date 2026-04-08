@@ -33,32 +33,32 @@
           ]
         },
         "image": {
-          "$ref": "#/definitions/imageConfig"
+          "$ref": "./schemas/image.schema.json#/definitions/imageConfig"
         },
         "envFrom": {
-          "$ref": "#/definitions/envFromConfig"
+          "$ref": "./schemas/env.schema.json#/definitions/envFromConfig"
         },
         "volumes": {
-          "$ref": "#/definitions/volumesConfig"
+          "$ref": "./schemas/volumes.schema.json#/definitions/volumesConfig"
         },
         "env": {
-          "$ref": "#/definitions/envConfig"
+          "$ref": "./schemas/env.schema.json#/definitions/envConfig"
         },
         "hostAliases": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/hostAliasEntry"
+            "$ref": "./schemas/scheduling.schema.json#/definitions/hostAliasEntry"
           }
         }
       }
     },
     "image": {
-      "$ref": "#/definitions/imageConfig"
+      "$ref": "./schemas/image.schema.json#/definitions/imageConfig"
     },
     "ports": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/definitions/portConfig"
+        "$ref": "./schemas/image.schema.json#/definitions/portConfig"
       }
     },
     "primaryPort": {
@@ -98,19 +98,19 @@
       "minimum": 0
     },
     "resources": {
-      "$ref": "#/definitions/resourcesConfig"
+      "$ref": "./schemas/resources.schema.json#/definitions/resourcesConfig"
     },
     "volumes": {
-      "$ref": "#/definitions/volumesConfig"
+      "$ref": "./schemas/volumes.schema.json#/definitions/volumesConfig"
     },
     "envFrom": {
-      "$ref": "#/definitions/envFromConfig"
+      "$ref": "./schemas/env.schema.json#/definitions/envFromConfig"
     },
     "env": {
-      "$ref": "#/definitions/envConfig"
+      "$ref": "./schemas/env.schema.json#/definitions/envConfig"
     },
     "probes": {
-      "$ref": "#/definitions/probesConfig"
+      "$ref": "./schemas/probes.schema.json#/definitions/probesConfig"
     },
     "labels": {
       "type": "object"
@@ -122,10 +122,10 @@
       "type": "object"
     },
     "strategy": {
-      "$ref": "#/definitions/strategyConfig"
+      "$ref": "./schemas/workload.schema.json#/definitions/strategyConfig"
     },
     "topologySpreadConstraints": {
-      "$ref": "#/definitions/topologySpreadConstraintsConfig"
+      "$ref": "./schemas/scheduling.schema.json#/definitions/topologySpreadConstraintsConfig"
     },
     "nodeSelector": {
       "type": "object",
@@ -136,26 +136,26 @@
     "tolerations": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/tolerationConfig"
+        "$ref": "./schemas/scheduling.schema.json#/definitions/tolerationConfig"
       }
     },
     "affinity": {
-      "$ref": "#/definitions/affinityConfig"
+      "$ref": "./schemas/scheduling.schema.json#/definitions/affinityConfig"
     },
     "podSecurityContext": {
-      "$ref": "#/definitions/podSecurityContextConfig"
+      "$ref": "./schemas/security.schema.json#/definitions/podSecurityContextConfig"
     },
     "containerSecurityContext": {
-      "$ref": "#/definitions/containerSecurityContextConfig"
+      "$ref": "./schemas/security.schema.json#/definitions/containerSecurityContextConfig"
     },
     "priorityClassName": {
       "type": "string"
     },
     "workload": {
-      "$ref": "#/definitions/workloadConfig"
+      "$ref": "./schemas/workload.schema.json#/definitions/workloadConfig"
     },
     "statefulSet": {
-      "$ref": "#/definitions/statefulSetConfig"
+      "$ref": "./schemas/workload.schema.json#/definitions/statefulSetConfig"
     },
     "configMap": {
       "type": "object",
@@ -496,30 +496,30 @@
       ]
     },
     "pdb": {
-      "$ref": "#/definitions/pdbConfig"
+      "$ref": "./schemas/workload.schema.json#/definitions/pdbConfig"
     },
     "persistentVolumeClaims": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/definitions/pvcConfig"
+        "$ref": "./schemas/volumes.schema.json#/definitions/pvcConfig"
       }
     },
     "cronJob": {
-      "$ref": "#/definitions/cronJobConfig"
+      "$ref": "./schemas/workload.schema.json#/definitions/cronJobConfig"
     },
     "hpa": {
-      "$ref": "#/definitions/hpaConfig"
+      "$ref": "./schemas/workload.schema.json#/definitions/hpaConfig"
     },
     "initContainers": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/containerSpec"
+        "$ref": "./schemas/container.schema.json#/definitions/containerSpec"
       }
     },
     "sidecars": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/containerSpec"
+        "$ref": "./schemas/container.schema.json#/definitions/containerSpec"
       }
     },
     "rawManifests": {
@@ -547,7 +547,7 @@
     "hostAliases": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/hostAliasEntry"
+        "$ref": "./schemas/scheduling.schema.json#/definitions/hostAliasEntry"
       }
     }
   },
@@ -708,1084 +708,5 @@
         }
       }
     }
-  ],
-  "definitions": {
-    "portConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "port"
-      ],
-      "properties": {
-        "port": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535
-        },
-        "appProtocol": {
-          "type": "string"
-        },
-        "nodePort": {
-          "type": "integer",
-          "minimum": 30000,
-          "maximum": 32767
-        }
-      }
-    },
-    "containerPortConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "port"
-      ],
-      "properties": {
-        "port": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535
-        }
-      }
-    },
-    "imageConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "url": {
-          "type": "string"
-        },
-        "tag": {
-          "type": "string"
-        },
-        "pullPolicy": {
-          "type": "string",
-          "enum": [
-            "Always",
-            "IfNotPresent",
-            "Never"
-          ]
-        },
-        "pullSecrets": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "resourcesConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "cpu",
-        "memory"
-      ],
-      "properties": {
-        "cpu": {
-          "type": [
-            "string",
-            "number"
-          ]
-        },
-        "memory": {
-          "type": "string"
-        },
-        "limitMultiplier": {
-          "type": "number",
-          "minimum": 1
-        }
-      }
-    },
-    "volumeMount": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "mountPath"
-      ],
-      "properties": {
-        "mountPath": {
-          "type": "string"
-        },
-        "defaultMode": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 511
-        },
-        "files": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "emptyVolumeMount": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "mountPath": {
-          "type": "string"
-        },
-        "defaultMode": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 511
-        }
-      }
-    },
-    "volumesConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "secrets": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/volumeMount"
-          }
-        },
-        "configMaps": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/volumeMount"
-          }
-        },
-        "emptyDirs": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/emptyVolumeMount"
-          }
-        },
-        "pvcs": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/pvcVolumeMount"
-          }
-        },
-        "hostPaths": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/hostPathVolumeMount"
-          }
-        }
-      }
-    },
-    "pvcVolumeMount": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "mountPath"
-      ],
-      "properties": {
-        "mountPath": {
-          "type": "string"
-        },
-        "readOnly": {
-          "type": "boolean"
-        }
-      }
-    },
-    "pvcConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "size"
-      ],
-      "properties": {
-        "size": {
-          "type": "string"
-        },
-        "storageClass": {
-          "type": "string"
-        },
-        "accessMode": {
-          "type": "string",
-          "enum": [
-            "ReadWriteOnce",
-            "ReadWriteMany",
-            "ReadOnlyMany"
-          ]
-        }
-      }
-    },
-    "pdbConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "enabled"
-      ],
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "minAvailable": {
-          "type": [
-            "integer",
-            "string"
-          ]
-        },
-        "maxUnavailable": {
-          "type": [
-            "integer",
-            "string"
-          ]
-        }
-      },
-      "allOf": [
-        {
-          "title": "pdb.minAvailable or pdb.maxUnavailable is required when pdb is enabled",
-          "if": {
-            "properties": {
-              "enabled": {
-                "const": true
-              }
-            },
-            "required": [
-              "enabled"
-            ]
-          },
-          "then": {
-            "anyOf": [
-              {
-                "required": [
-                  "minAvailable"
-                ]
-              },
-              {
-                "required": [
-                  "maxUnavailable"
-                ]
-              }
-            ]
-          }
-        }
-      ]
-    },
-    "envFromConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "secrets": {
-          "type": "object"
-        },
-        "configMaps": {
-          "type": "object"
-        }
-      }
-    },
-    "envVar": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "key",
-        "variable"
-      ],
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "variable": {
-          "type": "string"
-        }
-      }
-    },
-    "envResourceMap": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/envVar"
-        }
-      }
-    },
-    "envConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "secrets": {
-          "$ref": "#/definitions/envResourceMap"
-        },
-        "configMaps": {
-          "$ref": "#/definitions/envResourceMap"
-        }
-      }
-    },
-    "probeSpec": {
-      "type": "object",
-      "additionalProperties": false,
-      "oneOf": [
-        {
-          "title": "httpGet probe",
-          "required": [
-            "httpGet"
-          ],
-          "not": {
-            "required": [
-              "exec"
-            ]
-          }
-        },
-        {
-          "title": "exec probe",
-          "required": [
-            "exec"
-          ],
-          "not": {
-            "required": [
-              "httpGet"
-            ]
-          }
-        }
-      ],
-      "properties": {
-        "httpGet": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "path"
-          ],
-          "properties": {
-            "path": {
-              "type": "string"
-            },
-            "scheme": {
-              "type": "string",
-              "enum": [
-                "HTTP",
-                "HTTPS"
-              ]
-            }
-          }
-        },
-        "exec": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "command"
-          ],
-          "properties": {
-            "command": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "failureThreshold": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "initialDelaySeconds": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "periodSeconds": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "successThreshold": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "timeoutSeconds": {
-          "type": "integer",
-          "minimum": 1
-        }
-      }
-    },
-    "probesConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "readiness": {
-          "$ref": "#/definitions/probeSpec"
-        },
-        "liveness": {
-          "$ref": "#/definitions/probeSpec"
-        },
-        "startup": {
-          "$ref": "#/definitions/probeSpec"
-        }
-      }
-    },
-    "containerSpec": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name"
-      ],
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "image": {
-          "$ref": "#/definitions/imageConfig"
-        },
-        "ports": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/containerPortConfig"
-          }
-        },
-        "command": {
-          "type": "array"
-        },
-        "args": {
-          "type": "array"
-        },
-        "envFrom": {
-          "$ref": "#/definitions/envFromConfig"
-        },
-        "env": {
-          "$ref": "#/definitions/envConfig"
-        },
-        "resources": {
-          "$ref": "#/definitions/resourcesConfig"
-        },
-        "volumes": {
-          "$ref": "#/definitions/volumesConfig"
-        },
-        "probes": {
-          "$ref": "#/definitions/probesConfig"
-        },
-        "containerSecurityContext": {
-          "$ref": "#/definitions/containerSecurityContextConfig"
-        }
-      }
-    },
-    "cronJobConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "enabled"
-      ],
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "suspend": {
-          "type": "boolean"
-        },
-        "schedule": {
-          "type": "string",
-          "pattern": "^(@(annually|daily|hourly|midnight|monthly|weekly|yearly)|[0-9*/,\\-]+ [0-9*/,\\-]+ [0-9*/,\\-]+ [0-9*/,\\-]+ [0-9*/,\\-]+)$"
-        },
-        "concurrencyPolicy": {
-          "type": "string",
-          "enum": [
-            "Allow",
-            "Forbid",
-            "Replace"
-          ]
-        },
-        "successfulJobsHistory": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "failedJobsHistory": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "entrypoint": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "command": {
-              "type": "array"
-            },
-            "args": {
-              "type": "array"
-            }
-          }
-        }
-      },
-      "allOf": [
-        {
-          "title": "cronJob.schedule is required when cronJob is enabled",
-          "if": {
-            "properties": {
-              "enabled": {
-                "const": true
-              }
-            },
-            "required": [
-              "enabled"
-            ]
-          },
-          "then": {
-            "required": [
-              "schedule"
-            ]
-          }
-        }
-      ]
-    },
-    "hpaConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "enabled"
-      ],
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "maxReplicas": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "resources": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "cpu": {
-              "$ref": "#/definitions/hpaMetric"
-            },
-            "memory": {
-              "$ref": "#/definitions/hpaMetric"
-            }
-          }
-        }
-      },
-      "allOf": [
-        {
-          "title": "hpa.maxReplicas is required when hpa is enabled",
-          "if": {
-            "properties": {
-              "enabled": {
-                "const": true
-              }
-            },
-            "required": [
-              "enabled"
-            ]
-          },
-          "then": {
-            "required": [
-              "maxReplicas"
-            ]
-          }
-        }
-      ]
-    },
-    "workloadConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "type"
-      ],
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "Deployment",
-            "StatefulSet",
-            "DaemonSet"
-          ]
-        }
-      }
-    },
-    "statefulSetConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "headlessService"
-      ],
-      "properties": {
-        "headlessService": {
-          "type": "string",
-          "minLength": 1
-        },
-        "podManagementPolicy": {
-          "type": "string",
-          "enum": [
-            "OrderedReady",
-            "Parallel"
-          ]
-        },
-        "volumeClaimTemplates": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/volumeClaimTemplate"
-          }
-        }
-      }
-    },
-    "volumeClaimTemplate": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name",
-        "size"
-      ],
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "storageClass": {
-          "type": "string"
-        },
-        "size": {
-          "type": "string"
-        },
-        "accessMode": {
-          "type": "string",
-          "enum": [
-            "ReadWriteOnce",
-            "ReadWriteMany",
-            "ReadOnlyMany"
-          ]
-        }
-      }
-    },
-    "strategyConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "RollingUpdate",
-            "Recreate",
-            "OnDelete"
-          ]
-        },
-        "maxUnavailable": {
-          "type": [
-            "string",
-            "integer"
-          ]
-        },
-        "maxSurge": {
-          "type": [
-            "string",
-            "integer"
-          ]
-        },
-        "partition": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "topologySpreadConstraintsConfig": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "maxSkew",
-          "topologyKey",
-          "whenUnsatisfiable"
-        ],
-        "properties": {
-          "maxSkew": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "topologyKey": {
-            "type": "string"
-          },
-          "whenUnsatisfiable": {
-            "type": "string",
-            "enum": [
-              "DoNotSchedule",
-              "ScheduleAnyway"
-            ]
-          }
-        }
-      }
-    },
-    "hpaMetric": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "averageUtilization"
-      ],
-      "properties": {
-        "averageUtilization": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 99
-        }
-      }
-    },
-    "tolerationConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "operator": {
-          "type": "string",
-          "enum": [
-            "Exists",
-            "Equal"
-          ]
-        },
-        "value": {
-          "type": "string"
-        },
-        "effect": {
-          "type": "string",
-          "enum": [
-            "NoSchedule",
-            "PreferNoSchedule",
-            "NoExecute"
-          ]
-        },
-        "tolerationSeconds": {
-          "type": "integer",
-          "minimum": 0
-        }
-      }
-    },
-    "seccompProfile": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "type"
-      ],
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "RuntimeDefault",
-            "Unconfined",
-            "Localhost"
-          ]
-        },
-        "localhostProfile": {
-          "type": "string"
-        }
-      }
-    },
-    "podSecurityContextConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "runAsNonRoot": {
-          "type": "boolean"
-        },
-        "runAsUser": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "runAsGroup": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "fsGroup": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "fsGroupChangePolicy": {
-          "type": "string",
-          "enum": [
-            "Always",
-            "OnRootMismatch"
-          ]
-        },
-        "supplementalGroups": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "minimum": 0
-          }
-        },
-        "sysctls": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "name",
-              "value"
-            ],
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "value": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "seccompProfile": {
-          "$ref": "#/definitions/seccompProfile"
-        }
-      }
-    },
-    "matchExpression": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "key",
-        "operator"
-      ],
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "operator": {
-          "type": "string",
-          "enum": [
-            "In",
-            "NotIn",
-            "Exists",
-            "DoesNotExist",
-            "Gt",
-            "Lt"
-          ]
-        },
-        "values": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "preferredNodeExpression": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "weight",
-        "key",
-        "operator"
-      ],
-      "properties": {
-        "weight": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100
-        },
-        "key": {
-          "type": "string"
-        },
-        "operator": {
-          "type": "string",
-          "enum": [
-            "In",
-            "NotIn",
-            "Exists",
-            "DoesNotExist",
-            "Gt",
-            "Lt"
-          ]
-        },
-        "values": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "topologyKeyEntry": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "topologyKey"
-      ],
-      "properties": {
-        "topologyKey": {
-          "type": "string"
-        }
-      }
-    },
-    "weightedTopologyKeyEntry": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "weight",
-        "topologyKey"
-      ],
-      "properties": {
-        "weight": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 100
-        },
-        "topologyKey": {
-          "type": "string"
-        }
-      }
-    },
-    "affinityConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "nodeAffinity": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "required": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/matchExpression"
-              }
-            },
-            "preferred": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/preferredNodeExpression"
-              }
-            }
-          },
-          "allOf": [
-            {
-              "title": "affinity.nodeAffinity must specify at least 'required' or 'preferred'",
-              "anyOf": [
-                {
-                  "required": [
-                    "required"
-                  ]
-                },
-                {
-                  "required": [
-                    "preferred"
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        "podAntiAffinity": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "required": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/topologyKeyEntry"
-              }
-            },
-            "preferred": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/weightedTopologyKeyEntry"
-              }
-            }
-          },
-          "allOf": [
-            {
-              "title": "affinity.podAntiAffinity must specify at least 'required' or 'preferred'",
-              "anyOf": [
-                {
-                  "required": [
-                    "required"
-                  ]
-                },
-                {
-                  "required": [
-                    "preferred"
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      }
-    },
-    "containerSecurityContextConfig": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "readOnlyRootFilesystem": {
-          "type": "boolean"
-        },
-        "allowPrivilegeEscalation": {
-          "type": "boolean"
-        },
-        "privileged": {
-          "type": "boolean"
-        },
-        "runAsNonRoot": {
-          "type": "boolean"
-        },
-        "runAsUser": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "runAsGroup": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "capabilities": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "add": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "drop": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "seccompProfile": {
-          "$ref": "#/definitions/seccompProfile"
-        },
-        "procMount": {
-          "type": "string"
-        }
-      }
-    },
-    "hostPathVolumeMount": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "hostPath",
-        "mountPath"
-      ],
-      "properties": {
-        "hostPath": {
-          "type": "string"
-        },
-        "mountPath": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "",
-            "DirectoryOrCreate",
-            "Directory",
-            "FileOrCreate",
-            "File",
-            "Socket",
-            "CharDevice",
-            "BlockDevice"
-          ]
-        }
-      }
-    },
-    "hostAliasEntry": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "ip",
-        "hostnames"
-      ],
-      "properties": {
-        "ip": {
-          "type": "string"
-        },
-        "hostnames": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    }
-  }
+  ]
 }
