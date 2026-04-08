@@ -3,6 +3,57 @@ templates:
   - templates/deployment.yaml
 tests:
 
+  # ── containerPorts ────────────────────────────────────────────────────────────
+
+  - it: renders container ports from the ports map
+    values:
+      - ../_shared/common.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 5000
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].name
+          value: api
+
+  - it: renders probe port from primary port when single port defined
+    values:
+      - ../_shared/common.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: 5000
+
+  - it: fails when multiple ports defined without primaryPort
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      probes.readiness.httpGet.path: /health
+      ports.http.port: 8080
+      ports.metrics.port: 9090
+    asserts:
+      - failedTemplate: {}
+
+  - it: uses primaryPort for probe when multiple ports defined
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      probes.readiness.httpGet.path: /health
+      ports.http.port: 8080
+      ports.metrics.port: 9090
+      primaryPort: http
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.port
+          value: 8080
+
+  - it: omits containerPorts when no ports are defined
+    values:
+      - ./no-ports.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].ports
+
   # ── initContainers ────────────────────────────────────────────────────────────
 
   - it: renders initContainer

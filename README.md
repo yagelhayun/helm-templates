@@ -51,7 +51,9 @@ All resources except the workload are opt-in and produce no output when disabled
 global:
   region: us-east-1
 
-port: 8080
+ports:
+  http:
+    port: 8080
 replicas: 2           # not required for DaemonSet
 
 resources:
@@ -197,7 +199,7 @@ configMap:
   enabled: true
   data:
     LOG_LEVEL: info
-    PORT: "{{ .Values.port }}"   # Go template expressions supported
+    PORT: '{{ (index .Values.ports "http").port }}'   # Go template expressions supported
 ```
 
 `configMap.data` is required when `configMap.enabled: true`.
@@ -268,12 +270,46 @@ strategy:
   partition: 2            # StatefulSet canary rollouts (replaces maxUnavailable/maxSurge)
 ```
 
+### Ports
+
+The `ports` map defines all container ports. The key is the port name (used for `containerPort.name`, `service.port.name`, and `targetPort`). The value is a port config object.
+
+```yaml
+ports:
+  http:
+    port: 8080
+  metrics:
+    port: 9090
+    appProtocol: prometheus.io/metrics   # optional L7 protocol hint
+```
+
+When multiple ports are defined, `primaryPort` must specify which port is used by probes:
+
+```yaml
+primaryPort: http
+```
+
+With a single port, `primaryPort` is inferred automatically.
+
 ### Service
 
 ```yaml
 service:
   enabled: true
-# port and portName are shared with the workload container
+# ports are defined at the top level and shared with the container
+```
+
+NodePort and LoadBalancer per-port node ports:
+
+```yaml
+ports:
+  http:
+    port: 8080
+    nodePort: 30080   # optional; requires service.type: NodePort or LoadBalancer
+
+service:
+  enabled: true
+  type: NodePort
 ```
 
 ### PDB
@@ -362,6 +398,9 @@ sidecars:
     image:
       url: fluent/fluent-bit
       tag: "3.0"
+    ports:
+      metrics:
+        port: 2020
     resources:
       cpu: 50m
       memory: 64Mi

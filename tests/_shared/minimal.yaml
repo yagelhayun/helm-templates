@@ -4,7 +4,9 @@ global:
   region: us-east-1
   ignoreLookup: "true"
 
-port: 8080
+ports:
+  http:
+    port: 8080
 replicas: 1
 resources:
   cpu: 100m

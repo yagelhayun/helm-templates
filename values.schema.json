@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": true,
-  "required": ["global", "port", "resources"],
+  "required": ["global", "resources"],
   "properties": {
     "global": {
       "type": "object",
@@ -20,8 +20,11 @@
     },
 
     "image":                        { "$ref": "#/definitions/imageConfig" },
-    "port":                         { "type": "integer", "minimum": 1, "maximum": 65535 },
-    "portName":                     { "type": "string" },
+    "ports": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/portConfig" }
+    },
+    "primaryPort":                  { "type": "string" },
     "activeRegion":                 { "type": "string" },
     "replicas":                     { "type": "integer", "minimum": 0 },
     "revisionHistoryLimit":         { "type": "integer", "minimum": 1 },
@@ -103,7 +106,6 @@
           }
         },
         "externalIPs":              { "type": "array", "items": { "type": "string" } },
-        "appProtocol":              { "type": "string" },
         "publishNotReadyAddresses": { "type": "boolean" },
         "ipFamily": {
           "type": "object",
@@ -141,13 +143,6 @@
             }
           }
         },
-        "nodePort": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "port": { "type": "integer", "minimum": 30000, "maximum": 32767 }
-          }
-        },
         "loadBalancer": {
           "type": "object",
           "additionalProperties": false,
@@ -167,11 +162,6 @@
         }
       },
       "allOf": [
-        {
-          "title": "service.nodePort requires service.type: NodePort",
-          "if":   { "required": ["nodePort"] },
-          "then": { "required": ["type"], "properties": { "type": { "const": "NodePort" } } }
-        },
         {
           "title": "service.loadBalancer requires service.type: LoadBalancer",
           "if":   { "required": ["loadBalancer"] },
@@ -231,6 +221,30 @@
   },
 
   "allOf": [
+    {
+      "title": "ports[*].nodePort requires service.type NodePort or LoadBalancer",
+      "if": {
+        "required": ["ports"],
+        "properties": {
+          "ports": {
+            "not": {
+              "additionalProperties": {
+                "not": { "required": ["nodePort"] }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "required": ["service"],
+        "properties": {
+          "service": {
+            "required": ["type"],
+            "properties": { "type": { "enum": ["NodePort", "LoadBalancer"] } }
+          }
+        }
+      }
+    },
     {
       "title": "replicas is required for Deployment and StatefulSet",
       "if": {
@@ -295,6 +309,26 @@
   ],
 
   "definitions": {
+    "portConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["port"],
+      "properties": {
+        "port":        { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "appProtocol": { "type": "string" },
+        "nodePort":    { "type": "integer", "minimum": 30000, "maximum": 32767 }
+      }
+    },
+
+    "containerPortConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["port"],
+      "properties": {
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+      }
+    },
+
     "imageConfig": {
       "type": "object",
       "additionalProperties": false,
@@ -442,7 +476,6 @@
           "required": ["path"],
           "properties": {
             "path":   { "type": "string" },
-            "port":   { "type": ["integer", "string"] },
             "scheme": { "type": "string", "enum": ["HTTP", "HTTPS"] }
           }
         },
@@ -479,8 +512,10 @@
       "properties": {
         "name":      { "type": "string" },
         "image":     { "$ref": "#/definitions/imageConfig" },
-        "port":      { "type": "integer", "minimum": 1, "maximum": 65535 },
-        "portName":  { "type": "string" },
+        "ports": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/containerPortConfig" }
+        },
         "command":   { "type": "array" },
         "args":      { "type": "array" },
         "envFrom":   { "$ref": "#/definitions/envFromConfig" },

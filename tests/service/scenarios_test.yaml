@@ -1,4 +1,4 @@
-suite: service — opt-in, types, and schema
+suite: service — opt-in, types, ports, and schema
 templates:
   - templates/service.yaml
 tests:
@@ -23,9 +23,9 @@ tests:
       - isKind:
           of: Service
 
-  # ── Ports ───────────────────────────────────────────────────────────────────
+  # ── Single port ──────────────────────────────────────────────────────────────
 
-  - it: exposes the configured port
+  - it: exposes the configured port number
     values:
       - ../_shared/common.yaml
     asserts:
@@ -33,7 +33,7 @@ tests:
           path: spec.ports[0].port
           value: 5000
 
-  - it: uses portName for the named port
+  - it: uses the port map key as the port name
     values:
       - ../_shared/common.yaml
     asserts:
@@ -41,15 +41,13 @@ tests:
           path: spec.ports[0].name
           value: api
 
-  - it: defaults port name to http when portName is not set
+  - it: sets targetPort to the port name
     values:
-      - ../_shared/minimal.yaml
-    set:
-      service.enabled: true
+      - ../_shared/common.yaml
     asserts:
       - equal:
-          path: spec.ports[0].name
-          value: http
+          path: spec.ports[0].targetPort
+          value: api
 
   - it: selector matches the common labels
     values:
@@ -58,6 +56,71 @@ tests:
       - equal:
           path: spec.selector["app.kubernetes.io/name"]
           value: templates
+
+  # ── Multiple ports ───────────────────────────────────────────────────────────
+
+  - it: renders multiple ports when ports map has multiple entries
+    values:
+      - ./multi-port.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isNotEmpty:
+          path: spec.ports
+
+  - it: renders appProtocol on the metrics port
+    values:
+      - ./multi-port.yaml
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: metrics
+            protocol: TCP
+            port: 9090
+            targetPort: metrics
+            appProtocol: prometheus.io/metrics
+
+  - it: renders appProtocol on a port when set
+    values:
+      - ../_shared/common.yaml
+    set:
+      ports.api.appProtocol: kubernetes.io/h2c
+    asserts:
+      - equal:
+          path: spec.ports[0].appProtocol
+          value: kubernetes.io/h2c
+
+  - it: does not render appProtocol when not set
+    values:
+      - ../_shared/common.yaml
+    asserts:
+      - notExists:
+          path: spec.ports[0].appProtocol
+
+  - it: schema rejects unknown keys inside a port entry
+    values:
+      - ../_shared/common.yaml
+    set:
+      ports.api.unknown: value
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects port number below 1
+    values:
+      - ../_shared/common.yaml
+    set:
+      ports.api.port: 0
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects port number above 65535
+    values:
+      - ../_shared/common.yaml
+    set:
+      ports.api.port: 70000
+    asserts:
+      - failedTemplate: {}
 
   # ── Default type ────────────────────────────────────────────────────────────
 
@@ -86,7 +149,7 @@ tests:
       - ../_shared/common.yaml
     set:
       service.type: NodePort
-      service.nodePort.port: 30080
+      ports.api.nodePort: 30080
     asserts:
       - equal:
           path: spec.ports[0].nodePort
@@ -101,29 +164,41 @@ tests:
       - notExists:
           path: spec.ports[0].nodePort
 
-  - it: schema rejects nodePort object without type NodePort
+  - it: schema rejects nodePort without service.type NodePort or LoadBalancer
     values:
       - ../_shared/common.yaml
     set:
-      service.nodePort.port: 30080
+      ports.api.nodePort: 30080
     asserts:
       - failedTemplate: {}
 
-  - it: schema rejects nodePort object with type LoadBalancer
+  - it: schema rejects nodePort with service.type ExternalName
+    values:
+      - ../_shared/common.yaml
+    set:
+      service.type: ExternalName
+      service.externalName.host: "my.example.com"
+      ports.api.nodePort: 30080
+    asserts:
+      - failedTemplate: {}
+
+  - it: allows nodePort with service.type LoadBalancer
     values:
       - ../_shared/common.yaml
     set:
       service.type: LoadBalancer
-      service.nodePort.port: 30080
+      ports.api.nodePort: 30080
     asserts:
-      - failedTemplate: {}
+      - equal:
+          path: spec.ports[0].nodePort
+          value: 30080
 
   - it: schema rejects nodePort.port below 30000
     values:
       - ../_shared/common.yaml
     set:
       service.type: NodePort
-      service.nodePort.port: 80
+      ports.api.nodePort: 80
     asserts:
       - failedTemplate: {}
 
@@ -132,7 +207,7 @@ tests:
       - ../_shared/common.yaml
     set:
       service.type: NodePort
-      service.nodePort.port: 40000
+      ports.api.nodePort: 40000
     asserts:
       - failedTemplate: {}
 
@@ -548,25 +623,6 @@ tests:
       - equal:
           path: spec.clusterIP
           value: None
-
-  # ── appProtocol ──────────────────────────────────────────────────────────────
-
-  - it: renders appProtocol on the port when set
-    values:
-      - ../_shared/common.yaml
-    set:
-      service.appProtocol: kubernetes.io/h2c
-    asserts:
-      - equal:
-          path: spec.ports[0].appProtocol
-          value: kubernetes.io/h2c
-
-  - it: does not render appProtocol when not set
-    values:
-      - ../_shared/common.yaml
-    asserts:
-      - notExists:
-          path: spec.ports[0].appProtocol
 
   # ── Schema — invalid type enum ───────────────────────────────────────────────
 

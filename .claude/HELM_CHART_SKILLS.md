@@ -18,11 +18,11 @@ A values file has one required section (`global`) and several optional sections.
 
 ```
 global.*           — shared platform settings (region, image fallback, etc.)
-port               — main container and service port (required)
+ports.*            — named container/service ports (map of name → { port, appProtocol?, nodePort? })
+primaryPort        — name of the primary port used by probes (required when >1 port)
 replicas           — desired replica count (required)
 resources.*        — CPU and memory (required)
 image.*            — container image
-portName           — named port (default: "http")
 activeRegion       — enables blue/green deployment
 regions.*          — per-region value overrides
 configMap.*        — this service's ConfigMap
@@ -56,7 +56,7 @@ terminationGracePeriodSeconds
 
 1. **`global.region` is always required.** Every values file must include it. Its value must match one of the keys in the `regions` block (or be the only region used).
 
-2. **`port`, `replicas`, and `resources` are always required** at the top level.
+2. **`replicas` and `resources` are always required** at the top level. `ports` is optional (workloads with no exposed ports omit it).
 
 3. **Resources for `resources.cpu` and `resources.memory` are always required** when `resources` is present. `resources.limitMultiplier` is optional (default 4).
 
@@ -93,7 +93,9 @@ terminationGracePeriodSeconds
 global:
   region: us-east-1
 
-port: 8080
+ports:
+  http:
+    port: 8080
 replicas: 2
 resources:
   cpu: 250m
@@ -139,8 +141,9 @@ global:
         - key: PLATFORM_TOKEN
           variable: PLATFORM_TOKEN
 
-port: 8080
-portName: http                   # names the port; used for service targetPort too
+ports:
+  http:
+    port: 8080                   # single port; name is the port name and service targetPort
 replicas: 3
 revisionHistoryLimit: 5
 terminationGracePeriodSeconds: 60
@@ -178,7 +181,7 @@ configMap:
   data:
     LOG_LEVEL: info
     MAX_POOL_SIZE: "20"
-    PORT: "{{ .Values.port }}"   # Go template expressions are supported
+    PORT: '{{ (index .Values.ports "http").port }}'   # Go template expressions are supported
 
 deployment:
   enabled: true
@@ -217,7 +220,7 @@ probes:
   readiness:
     httpGet:
       path: /health/ready
-      scheme: HTTP
+      scheme: HTTP               # HTTP (default) or HTTPS; port is taken from primaryPort
     failureThreshold: 3
     initialDelaySeconds: 40
     periodSeconds: 30
@@ -254,8 +257,9 @@ sidecars:
     image:
       url: fluent/fluent-bit
       tag: "3.0"
-    port: 2020
-    portName: metrics
+    ports:
+      metrics:
+        port: 2020
     resources:
       cpu: 50m
       memory: 64Mi
@@ -337,7 +341,9 @@ global:
       platform-secret: {}
 
 worker:                          # matches the sub-chart name
-  port: 9999
+  ports:
+    http:
+      port: 9999
   replicas: 5
   resources:
     cpu: 1
@@ -355,7 +361,9 @@ worker:                          # matches the sub-chart name
       MODE: worker
 
 master:
-  port: 1111
+  ports:
+    http:
+      port: 1111
   replicas: 2
   resources:
     cpu: 3
@@ -426,6 +434,7 @@ volumes:
 ### Configure a startup probe for a slow-starting service
 
 ```yaml
+# The probe port is taken from primaryPort (or auto-detected for single-port workloads).
 probes:
   startup:
     httpGet:
@@ -575,12 +584,15 @@ rawManifests:
 
 ## What NOT to do
 
+- Do not use the old `port` (integer) or `portName` (string) top-level keys — they are removed. Use `ports` map instead.
 - Do not add keys not listed in this document — they will be rejected by schema validation.
 - Do not set `hpa.enabled: true` and `activeRegion` together.
 - Do not use `configMap.enabled: true` without `configMap.data`.
 - Do not use `configMap.as: volume` without `configMap.mountPath`.
 - Do not reference a secret/configmap in `env` that doesn't exist in the target cluster (lookup will fail during real deployments).
 - Do not use `exec` and `httpGet` in the same probe.
+- Do not set `primaryPort` without also setting `ports`.
+- Do not define `ports[*].nodePort` without `service.type: NodePort` or `service.type: LoadBalancer`.
 - Do not set `resources.limitMultiplier` below `1`.
 - Do not set `revisionHistoryLimit` to `0` unless you explicitly want to disable rollback.
 - Do not use `{{ }}` in `rawManifests` content without setting `tpl: true` if you intend them to be resolved — without it they render literally.

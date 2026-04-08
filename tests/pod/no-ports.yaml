@@ -2,20 +2,15 @@ global:
   region: us-east-1
   ignoreLookup: "true"
 
-ports:
-  metrics:
-    port: 9100
-
-image:
-  url: myrepo/node-agent
-  tag: v1.0.0
-
+replicas: 1
 resources:
   cpu: 100m
-  memory: 128Mi
+  memory: 256Mi
+image:
+  url: myapp
 
 workload:
-  type: DaemonSet
+  type: Deployment
 
 service:
   enabled: false

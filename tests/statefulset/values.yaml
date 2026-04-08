@@ -2,8 +2,9 @@ global:
   region: us-east-1
   ignoreLookup: "true"
 
-port: 5000
-portName: api
+ports:
+  api:
+    port: 5000
 replicas: 3
 
 image:

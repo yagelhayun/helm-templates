@@ -63,7 +63,7 @@ spec:
         {{- with (include "core.container.sidecars" $context) }}
         {{- . | indent 8 }}
         {{- end }}
-  {{- with (include "core.pod.volumeClaimTemplates" $context) }}
+  {{- with (include "core.statefulset.volumeClaimTemplates" $context) }}
   volumeClaimTemplates: {{ . | indent 4 }}
   {{- end }}
 {{- end }}

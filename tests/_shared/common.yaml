@@ -2,8 +2,9 @@ global:
   region: us-east-1
   ignoreLookup: "true"
 
-port: 5000
-portName: api
+ports:
+  api:
+    port: 5000
 
 activeRegion: us-east-1
 
@@ -84,12 +85,10 @@ probes:
   readiness:
     httpGet:
       path: /health
-      port: 5000
       scheme: HTTP
   liveness:
     httpGet:
       path: /health
-      port: 5000
       scheme: HTTP
     failureThreshold: 1
     initialDelaySeconds: 15
@@ -99,7 +98,6 @@ probes:
   startup:
     httpGet:
       path: /ready
-      port: 5000
     failureThreshold: 30
     periodSeconds: 10
 
@@ -119,8 +117,9 @@ sidecars:
     image:
       url: fluent/fluent-bit
       tag: "2.2"
-    port: 2020
-    portName: metrics
+    ports:
+      metrics:
+        port: 2020
     resources:
       cpu: 50m
       memory: 64Mi

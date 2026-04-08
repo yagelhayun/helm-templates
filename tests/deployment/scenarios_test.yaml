@@ -160,19 +160,19 @@ tests:
     asserts:
       - failedTemplate: {}
 
-  - it: schema rejects port of 0
+  - it: schema rejects port number below 1
     values:
       - ../_shared/minimal.yaml
     set:
-      port: 0
+      ports.http.port: 0
     asserts:
       - failedTemplate: {}
 
-  - it: schema rejects port above 65535
+  - it: schema rejects port number above 65535
     values:
       - ../_shared/minimal.yaml
     set:
-      port: 65536
+      ports.http.port: 65536
     asserts:
       - failedTemplate: {}
 

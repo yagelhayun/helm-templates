@@ -3,22 +3,26 @@ global:
   ignoreLookup: "true"
 
 ports:
+  http:
+    port: 8080
   metrics:
-    port: 9100
+    port: 9090
+    appProtocol: prometheus.io/metrics
 
-image:
-  url: myrepo/node-agent
-  tag: v1.0.0
+primaryPort: http
 
+replicas: 1
 resources:
   cpu: 100m
-  memory: 128Mi
+  memory: 256Mi
+image:
+  url: myapp
 
 workload:
-  type: DaemonSet
+  type: Deployment
 
 service:
-  enabled: false
+  enabled: true
 configMap:
   enabled: false
 cronJob:
