@@ -1,0 +1,85 @@
+suite: workload — enabled flag and schema validation
+templates:
+  - templates/deployment.yaml
+
+tests:
+
+  # ── workload.enabled opt-in ───────────────────────────────────────────────────
+
+  - it: does not render when workload.enabled is false
+    values:
+      - ../_shared/no-workload.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders when workload.enabled is true and type is set
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      workload.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+
+  - it: renders when workload.enabled is omitted (defaults to true)
+    values:
+      - ../_shared/minimal.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+
+  # ── Schema — workload.enabled: false skips required fields ───────────────────
+
+  - it: schema allows omitting replicas when workload.enabled is false
+    values:
+      - ../_shared/no-workload.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: schema allows omitting resources when workload.enabled is false
+    values:
+      - ../_shared/no-workload.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # ── Schema — workload.type still required when enabled ───────────────────────
+
+  - it: schema rejects workload without type when enabled is true
+    values:
+      - ../_shared/no-workload.yaml
+    set:
+      workload.enabled: true
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects workload without type when enabled is omitted
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      workload.type: null
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects unknown property on workload
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      workload.unknown: value
+    asserts:
+      - failedTemplate: {}
+
+  # ── Schema — resources no longer globally required ────────────────────────────
+
+  - it: schema allows omitting resources at the root level
+    values:
+      - ../_shared/no-workload.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

@@ -1,3 +1,6 @@
+workload:
+  enabled: true
+
 revisionHistoryLimit: 1
 
 terminationGracePeriodSeconds: 30

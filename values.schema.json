@@ -3,8 +3,7 @@
   "type": "object",
   "additionalProperties": true,
   "required": [
-    "global",
-    "resources"
+    "global"
   ],
   "properties": {
     "global": {
@@ -597,21 +596,42 @@
       "title": "replicas is required for Deployment and StatefulSet",
       "if": {
         "not": {
-          "required": [
-            "workload"
-          ],
-          "properties": {
-            "workload": {
+          "anyOf": [
+            {
               "required": [
-                "type"
+                "workload"
               ],
               "properties": {
-                "type": {
-                  "const": "DaemonSet"
+                "workload": {
+                  "required": [
+                    "type"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "DaemonSet"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "required": [
+                "workload"
+              ],
+              "properties": {
+                "workload": {
+                  "required": [
+                    "enabled"
+                  ],
+                  "properties": {
+                    "enabled": {
+                      "const": false
+                    }
+                  }
                 }
               }
             }
-          }
+          ]
         }
       },
       "then": {

@@ -4,10 +4,10 @@
     "workloadConfig": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "type"
-      ],
       "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
         "type": {
           "type": "string",
           "enum": [
@@ -16,7 +16,29 @@
             "DaemonSet"
           ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "title": "workload.type is required when workload.enabled is not false",
+          "if": {
+            "not": {
+              "properties": {
+                "enabled": {
+                  "const": false
+                }
+              },
+              "required": [
+                "enabled"
+              ]
+            }
+          },
+          "then": {
+            "required": [
+              "type"
+            ]
+          }
+        }
+      ]
     },
     "statefulSetConfig": {
       "type": "object",

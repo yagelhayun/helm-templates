@@ -5,9 +5,18 @@ tests:
 
   # ── Opt-in ───────────────────────────────────────────────────────────────────
 
-  - it: does not render when workload.type is not set
+  - it: does not render when workload.enabled is false
     values:
       - ../_shared/no-workload.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: does not render when workload.enabled is explicitly false with type set
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      workload.enabled: false
     asserts:
       - hasDocuments:
           count: 0

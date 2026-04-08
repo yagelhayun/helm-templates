@@ -1,18 +1,11 @@
-# No workload type set — used to verify workload templates do not render
-# when workload.type is absent.
+# Workload explicitly disabled — used to verify workload templates do not render
+# and that resources/replicas are not required when workload.enabled: false.
 global:
   region: us-east-1
   ignoreLookup: "true"
 
-ports:
-  http:
-    port: 8080
-replicas: 1
-resources:
-  cpu: 100m
-  memory: 256Mi
-image:
-  url: myapp
+workload:
+  enabled: false
 
 service:
   enabled: false

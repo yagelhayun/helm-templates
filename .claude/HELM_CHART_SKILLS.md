@@ -20,14 +20,14 @@ A values file has one required section (`global`) and several optional sections.
 global.*           — shared platform settings (region, image fallback, etc.)
 ports.*            — named container/service ports (map of name → { port, appProtocol?, nodePort? })
 primaryPort        — name of the primary port used by probes (required when >1 port)
-replicas           — desired replica count (required)
-resources.*        — CPU and memory (required)
+replicas           — desired replica count (required unless workload.enabled: false or DaemonSet)
+resources.*        — CPU and memory (required when workload is active)
 image.*            — container image
 activeRegion       — enables blue/green deployment
 regions.*          — per-region value overrides
 configMap.*        — this service's ConfigMap
 rawManifests       — list of raw Kubernetes manifests to pass through as-is
-deployment.*       — enable/disable Deployment
+workload.*         — workload control: enabled (bool, default true) + type (Deployment|StatefulSet|DaemonSet)
 service.*          — enable/disable Service
 cronJob.*          — enable/disable and configure CronJob
 hpa.*              — enable/disable and configure HPA
@@ -56,11 +56,13 @@ terminationGracePeriodSeconds
 
 1. **`global.region` is always required.** Every values file must include it. Its value must match one of the keys in the `regions` block (or be the only region used).
 
-2. **`replicas` and `resources` are always required** at the top level. `ports` is optional (workloads with no exposed ports omit it).
+2. **`replicas` and `resources` are required when deploying a workload** (Deployment or StatefulSet). They are not required when `workload.enabled: false` or when the workload type is DaemonSet. `ports` is optional (workloads with no exposed ports omit it).
 
 3. **Resources for `resources.cpu` and `resources.memory` are always required** when `resources` is present. `resources.limitMultiplier` is optional (default 4).
 
-4. **Every resource (Deployment, Service, ConfigMap, CronJob, HPA) requires `enabled: true/false`.** If you omit the block entirely, the resource is not rendered. Always explicitly set `enabled`.
+4. **Every resource (Service, ConfigMap, CronJob, HPA) requires `enabled: true/false`.** If you omit the block entirely, the resource is not rendered. Always explicitly set `enabled`.
+
+4a. **`workload.enabled` defaults to `true`.** Set `workload.enabled: false` to render a chart with no workload (e.g., RBAC-only or ConfigMap-only charts). When disabled, `workload.type` is not required and `replicas`/`resources` may be omitted. A Helm NOTE is printed if the chart would render no resources at all.
 
 5. **`configMap.data` is required when `configMap.enabled: true`.** Values must be strings, numbers, or booleans.
 

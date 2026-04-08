@@ -1,4 +1,4 @@
-{{- if eq (.Values.workload).type "StatefulSet" }}
+{{- if and (ne (.Values.workload).enabled false) (eq (.Values.workload).type "StatefulSet") }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 kind: StatefulSet

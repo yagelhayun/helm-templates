@@ -1,0 +1,19 @@
+{{- $hasWorkload := and (ne ((.Values.workload).enabled) false) (not (empty ((.Values.workload).type))) }}
+{{- $hasCronJob := eq ((.Values.cronJob).enabled) true }}
+{{- $hasConfigMap := eq ((.Values.configMap).enabled) true }}
+{{- $hasService := eq ((.Values.service).enabled) true }}
+{{- $hasRawManifests := not (empty .Values.rawManifests) }}
+{{- $hasPVCs := not (empty .Values.persistentVolumeClaims) }}
+{{- $hasServiceAccount := eq ((.Values.serviceAccount).create) true }}
+{{- $hasAnyResource := or $hasWorkload $hasCronJob $hasConfigMap $hasService $hasRawManifests $hasPVCs $hasServiceAccount }}
+{{- if not $hasAnyResource }}
+WARNING: This chart is configured to render no Kubernetes resources.
+Set workload.type (Deployment, StatefulSet, or DaemonSet) to deploy an application,
+or enable at least one resource (configMap, service, cronJob, rawManifests, etc.).
+{{- end }}
+{{- if $hasRawManifests }}
+
+NOTE: This chart includes rawManifests. These are passed through as-is and are
+not validated by the chart's schema or rendered through any of its helpers.
+Ensure the manifests are correct before deploying.
+{{- end }}
