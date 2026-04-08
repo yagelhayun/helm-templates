@@ -10,4 +10,7 @@ dependencies:
 maintainers:
   - name: Yagel Hayun
 sources:
-  - https://github.com/yagelhayun/helm-templates
+  - https://github.com/yagelhayun/helm-core
+home: https://github.com/yagelhayun/helm-templates
+annotations:
+  licenses: Apache-2.0
