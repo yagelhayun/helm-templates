@@ -24,9 +24,9 @@ jobs:
 
       - name: Lint (validates chart structure and JSON schema)
         run: >-
-          helm lint .
-          -f tests/_shared/common.yaml
-          -f tests/_shared/prod.yaml
+          helm lint $GITHUB_WORKSPACE
+          -f $GITHUB_WORKSPACE/tests/_shared/common.yaml
+          -f $GITHUB_WORKSPACE/tests/_shared/prod.yaml
 
       - name: Install helm-unittest
         run: helm plugin install https://github.com/helm-unittest/helm-unittest --verify=false
