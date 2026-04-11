@@ -8,7 +8,7 @@ ports:
 replicas: 3
 
 image:
-  url: myrepo/myapp
+  repository: myrepo/myapp
   tag: v1.0.0
 
 resources:

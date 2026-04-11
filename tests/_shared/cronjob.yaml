@@ -7,7 +7,7 @@ ports:
     port: 5000
 
 image:
-  url: myrepo/myapp
+  repository: myrepo/myapp
   pullSecrets:
     - registry-secret
 

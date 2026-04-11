@@ -107,7 +107,8 @@ global:
 
 ```yaml
 image:
-  url: myrepo/myapp         # required if global.image.url not set
+  registry: gcr.io          # optional registry host
+  repository: myrepo/myapp  # required if global.image.repository not set
   tag: "1.2.3"              # default: "latest"
   pullPolicy: IfNotPresent
   pullSecrets:

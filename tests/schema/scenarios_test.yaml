@@ -73,7 +73,7 @@ tests:
     values:
       - ../_shared/minimal.yaml
     set:
-      global.image.url: myrepo/base
+      global.image.repository: myrepo/base
       global.image.unknownKey: value
     asserts:
       - failedTemplate: {}

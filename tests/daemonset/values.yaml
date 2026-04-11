@@ -7,7 +7,7 @@ ports:
     port: 9100
 
 image:
-  url: myrepo/node-agent
+  repository: myrepo/node-agent
   tag: v1.0.0
 
 resources:

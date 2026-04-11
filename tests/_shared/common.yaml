@@ -9,7 +9,7 @@ ports:
 activeRegion: us-east-1
 
 image:
-  url: myrepo/myapp
+  repository: myrepo/myapp
   pullSecrets:
     - registry-secret
 
@@ -92,7 +92,7 @@ probes:
 initContainers:
   - name: db-migration
     image:
-      url: myrepo/migrator
+      repository: myrepo/migrator
       tag: "1.0"
     command: ["/bin/sh"]
     args: ["-c", "echo running migration"]
@@ -103,7 +103,7 @@ initContainers:
 sidecars:
   - name: log-shipper
     image:
-      url: fluent/fluent-bit
+      repository: fluent/fluent-bit
       tag: "2.2"
     ports:
       metrics:
