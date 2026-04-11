@@ -2,7 +2,7 @@ apiVersion: v2
 name: templates
 description: Opinionated application chart that wraps helm-core. Configured entirely through values, no template authoring required.
 type: application
-version: 0.7.0
+version: 0.6.0
 dependencies:
   - name: core
     version: 0.5.1
