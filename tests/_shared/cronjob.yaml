@@ -1,0 +1,37 @@
+global:
+  region: us-east-1
+  ignoreLookup: "true"
+
+ports:
+  api:
+    port: 5000
+
+image:
+  url: myrepo/myapp
+  pullSecrets:
+    - registry-secret
+
+resources:
+  cpu: 250m
+  memory: 500Mi
+
+workload:
+  type: CronJob
+
+cronJob:
+  schedule: "@hourly"
+  concurrencyPolicy: Allow
+  successfulJobsHistory: 4
+  failedJobsHistory: 5
+  entrypoint:
+    command:
+      - "/bin/bash"
+    args:
+      - "echo hello"
+
+service:
+  enabled: false
+configMap:
+  enabled: false
+hpa:
+  enabled: false

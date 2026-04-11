@@ -46,18 +46,6 @@ workload:
 service:
   enabled: true
 
-cronJob:
-  enabled: true
-  schedule: "@hourly"
-  concurrencyPolicy: Allow
-  successfulJobsHistory: 4
-  failedJobsHistory: 5
-  entrypoint:
-    command:
-      - "/bin/bash"
-    args:
-      - "echo hello"
-
 hpa:
   enabled: false
 

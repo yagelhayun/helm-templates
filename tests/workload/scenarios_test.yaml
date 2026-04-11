@@ -75,6 +75,14 @@ tests:
     asserts:
       - failedTemplate: {}
 
+  - it: schema rejects workload.type when workload.enabled is false
+    values:
+      - ../_shared/no-workload.yaml
+    set:
+      workload.type: Deployment
+    asserts:
+      - failedTemplate: {}
+
   # ── Schema — resources no longer globally required ────────────────────────────
 
   - it: schema allows omitting resources at the root level

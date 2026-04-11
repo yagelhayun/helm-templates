@@ -25,7 +25,5 @@ service:
   enabled: true
 configMap:
   enabled: false
-cronJob:
-  enabled: false
 hpa:
   enabled: false

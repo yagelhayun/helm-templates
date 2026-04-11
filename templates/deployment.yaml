@@ -1,4 +1,4 @@
-{{- if and (ne (.Values.workload).enabled false) (eq (.Values.workload).type "Deployment") }}
+{{- if and (eq (.Values.workload).enabled true) (eq (.Values.workload).type "Deployment") }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 kind: Deployment

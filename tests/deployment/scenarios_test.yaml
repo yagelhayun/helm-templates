@@ -12,15 +12,6 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: does not render when workload.enabled is explicitly false with type set
-    values:
-      - ../_shared/minimal.yaml
-    set:
-      workload.enabled: false
-    asserts:
-      - hasDocuments:
-          count: 0
-
   - it: does not render when workload.type is StatefulSet
     values:
       - ../statefulset/values.yaml

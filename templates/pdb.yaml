@@ -1,4 +1,4 @@
-{{- if and ((.Values.pdb).enabled) (ne (.Values.workload).enabled false) }}
+{{- if and ((.Values.pdb).enabled) (eq (.Values.workload).enabled true) }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 kind: PodDisruptionBudget

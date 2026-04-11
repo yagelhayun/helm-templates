@@ -1,4 +1,4 @@
-{{- if .Values.service.enabled }}
+{{- if (.Values.service).enabled }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 kind: Service

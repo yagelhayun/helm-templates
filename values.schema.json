@@ -795,7 +795,8 @@
           "enum": [
             "Deployment",
             "StatefulSet",
-            "DaemonSet"
+            "DaemonSet",
+            "CronJob"
           ]
         }
       },
@@ -818,6 +819,26 @@
             "required": [
               "type"
             ]
+          }
+        },
+        {
+          "title": "workload.type is not allowed when workload.enabled is false",
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": false
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "type"
+              ]
+            }
           }
         }
       ]
@@ -997,12 +1018,9 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "enabled"
+        "schedule"
       ],
       "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
         "suspend": {
           "type": "boolean"
         },
@@ -1038,27 +1056,7 @@
             }
           }
         }
-      },
-      "allOf": [
-        {
-          "title": "cronJob.schedule is required when cronJob is enabled",
-          "if": {
-            "properties": {
-              "enabled": {
-                "const": true
-              }
-            },
-            "required": [
-              "enabled"
-            ]
-          },
-          "then": {
-            "required": [
-              "schedule"
-            ]
-          }
-        }
-      ]
+      }
     },
     "containerSpec": {
       "type": "object",
@@ -1722,6 +1720,23 @@
               "properties": {
                 "workload": {
                   "required": [
+                    "type"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "CronJob"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "required": [
+                "workload"
+              ],
+              "properties": {
+                "workload": {
+                  "required": [
                     "enabled"
                   ],
                   "properties": {
@@ -1812,6 +1827,62 @@
             "properties": {
               "type": {
                 "const": "DaemonSet"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "hpa": {
+            "properties": {
+              "enabled": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "title": "cronJob block is required when workload.type is CronJob",
+      "if": {
+        "required": [
+          "workload"
+        ],
+        "properties": {
+          "workload": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "CronJob"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "cronJob"
+        ]
+      }
+    },
+    {
+      "title": "HPA must be disabled for CronJob workloads",
+      "if": {
+        "required": [
+          "workload"
+        ],
+        "properties": {
+          "workload": {
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "const": "CronJob"
               }
             }
           }

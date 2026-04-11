@@ -23,8 +23,6 @@ configMap:
   mountPath: /etc/config
   data:
     KEY: value
-cronJob:
-  enabled: false
 hpa:
   enabled: false
 

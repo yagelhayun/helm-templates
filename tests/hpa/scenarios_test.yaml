@@ -50,6 +50,98 @@ tests:
           path: spec.maxReplicas
           value: 4
 
+  - it: scaleTargetRef points to the correct workload kind and name
+    values:
+      - ../_shared/common.yaml
+      - ../_shared/prod.yaml
+    set:
+      hpa.enabled: true
+      activeRegion: ""
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Deployment
+      - equal:
+          path: spec.scaleTargetRef.apiVersion
+          value: apps/v1
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: templates
+
+  - it: metrics list is rendered from hpa.resources
+    values:
+      - ../_shared/common.yaml
+      - ../_shared/prod.yaml
+    set:
+      hpa.enabled: true
+      activeRegion: ""
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: cpu
+              target:
+                type: Utilization
+                averageUtilization: 70
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: memory
+              target:
+                type: Utilization
+                averageUtilization: 70
+
+  - it: averageUtilization defaults to 70 when not set
+    values:
+      - ../_shared/common.yaml
+      - ../_shared/prod.yaml
+    set:
+      hpa.enabled: true
+      activeRegion: ""
+      hpa.resources.cpu: {}
+    asserts:
+      - contains:
+          path: spec.metrics
+          content:
+            type: Resource
+            resource:
+              name: cpu
+              target:
+                type: Utilization
+                averageUtilization: 70
+
+  - it: minReplicas matches replicas value
+    values:
+      - ../_shared/common.yaml
+      - ../_shared/prod.yaml
+    set:
+      hpa.enabled: true
+      activeRegion: ""
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 3
+
+  - it: scaleTargetRef points to StatefulSet when workload.type is StatefulSet
+    values:
+      - ../statefulset/values.yaml
+    set:
+      hpa.enabled: true
+      hpa.maxReplicas: 6
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: StatefulSet
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: templates
+
   # ── Schema validation ────────────────────────────────────────────────────────
 
   - it: schema rejects hpa.enabled true without maxReplicas

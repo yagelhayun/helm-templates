@@ -21,8 +21,6 @@ configMap:
   enabled: true
   data:
     KEY: value
-cronJob:
-  enabled: false
 hpa:
   enabled: false
 

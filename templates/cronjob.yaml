@@ -1,4 +1,4 @@
-{{- if .Values.cronJob.enabled }}
+{{- if and (eq (.Values.workload).enabled true) (eq (.Values.workload).type "CronJob") }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 kind: CronJob

@@ -25,6 +25,9 @@ Select the workload kind with `workload.type`. Exactly one workload resource is 
 | `Deployment` | Stateless services (default) |
 | `StatefulSet` | Requires `statefulSet.headlessService` |
 | `DaemonSet` | `replicas` not required |
+| `CronJob` | `replicas` not required; requires `cronJob.schedule` |
+
+`workload.type` is not allowed when `workload.enabled: false`.
 
 ---
 
@@ -34,10 +37,9 @@ All resources except the workload are opt-in and produce no output when disabled
 
 | Resource | Enabled by |
 |----------|------------|
-| Deployment / StatefulSet / DaemonSet | `workload.type` |
+| Deployment / StatefulSet / DaemonSet / CronJob | `workload.type` |
 | ConfigMap | `configMap.enabled: true` |
 | Service | `service.enabled: true` |
-| CronJob | `cronJob.enabled: true` |
 | HPA | `hpa.enabled: true` |
 | PDB | `pdb.enabled: true` |
 | PersistentVolumeClaims | `persistentVolumeClaims.*` (one PVC per entry) |
@@ -327,10 +329,14 @@ pdb:
 
 ### CronJob
 
+Set `workload.type: CronJob` to render a CronJob. The `cronJob` block is required and holds schedule and job-specific settings.
+
 ```yaml
+workload:
+  type: CronJob
+
 cronJob:
-  enabled: true
-  schedule: "0 * * * *"         # required when enabled
+  schedule: "0 * * * *"         # required
   concurrencyPolicy: Forbid      # Allow | Forbid | Replace (default: Forbid)
   successfulJobsHistory: 3       # default: 3
   failedJobsHistory: 1           # default: 1
@@ -339,7 +345,7 @@ cronJob:
     args: ["-c", "echo hello"]
 ```
 
-Shares `envFrom`, `env`, `volumes`, `resources`, `initContainers`, and `image` with the workload.
+Shares `envFrom`, `env`, `volumes`, `resources`, `initContainers`, and `image` with the workload. HPA cannot be used with CronJob.
 
 ### HPA
 

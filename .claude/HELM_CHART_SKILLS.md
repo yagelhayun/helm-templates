@@ -27,7 +27,7 @@ activeRegion       — enables blue/green deployment
 regions.*          — per-region value overrides
 configMap.*        — this service's ConfigMap
 rawManifests       — list of raw Kubernetes manifests to pass through as-is
-workload.*         — workload control: enabled (bool, default true) + type (Deployment|StatefulSet|DaemonSet)
+workload.*         — workload control: enabled (bool, default true) + type (Deployment|StatefulSet|DaemonSet|CronJob)
 service.*          — enable/disable Service
 cronJob.*          — enable/disable and configure CronJob
 hpa.*              — enable/disable and configure HPA
@@ -70,7 +70,7 @@ terminationGracePeriodSeconds
    - `env` — all keys are injected as environment variables via `envFrom.configMapRef` (default behaviour)
    - `volume` — the ConfigMap is mounted as a directory; `configMap.mountPath` is required. The pod volume and container volumeMount are auto-created; no `envFrom` entry is added.
 
-6. **`cronJob.schedule` is required when `cronJob.enabled: true`.**
+6. **`workload.type: CronJob` renders a CronJob.** The `cronJob` block is required when using this type, and `cronJob.schedule` is required within it. HPA cannot be used with CronJob. `workload.type` is not allowed when `workload.enabled: false`.
 
 7. **`hpa.maxReplicas` is required when `hpa.enabled: true`.** `minReplicas` is taken from the top-level `replicas` key.
 
@@ -293,9 +293,11 @@ hpa:
     memory:
       averageUtilization: 80
 
+workload:
+  type: CronJob
+
 cronJob:
-  enabled: true
-  schedule: "0 2 * * *"         # daily at 2am
+  schedule: "0 2 * * *"         # daily at 2am; required when workload.type is CronJob
   concurrencyPolicy: Forbid
   successfulJobsHistory: 3
   failedJobsHistory: 1
@@ -493,11 +495,7 @@ hpa:
 
 ### Disable a resource
 
-```yaml
-cronJob:
-  enabled: false
-  schedule: "@daily"     # schedule can still be present; ignored when disabled
-```
+Set `workload.type` to a different type (e.g. `Deployment`) — CronJob is only rendered when `workload.type: CronJob`.
 
 ### Target specific nodes (nodeSelector)
 
@@ -620,6 +618,9 @@ rawManifests:
 - Do not add keys not listed in this document — they will be rejected by schema validation.
 - Do not set `hpa.enabled: true` and `activeRegion` together.
 - Do not use `configMap.enabled: true` without `configMap.data`.
+- Do not set `workload.type` when `workload.enabled: false` — this is a schema error.
+- Do not use `cronJob.enabled` — CronJob is now controlled by `workload.type: CronJob`.
+- Do not set `hpa.enabled: true` when `workload.type: CronJob`.
 - Do not use `configMap.as: volume` without `configMap.mountPath`.
 - Do not reference a secret/configmap in `env` that doesn't exist in the target cluster (lookup will fail during real deployments).
 - Do not use `exec` and `httpGet` in the same probe.

@@ -1,4 +1,4 @@
-{{- if .Values.configMap.enabled }}
+{{- if (.Values.configMap).enabled }}
 {{- $config := include "core.general.config" . | fromYaml }}
 {{- $context := merge (dict "$" $) $config }}
 kind: ConfigMap

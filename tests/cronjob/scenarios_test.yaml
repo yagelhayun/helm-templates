@@ -1,24 +1,20 @@
-suite: cronJob — opt-in, configuration, and schema
+suite: cronJob — type-based opt-in, configuration, and schema
 templates:
   - templates/cronjob.yaml
 tests:
 
   # ── Opt-in ───────────────────────────────────────────────────────────────────
 
-  - it: does not render when cronJob.enabled is false
+  - it: does not render when workload.type is Deployment
     values:
-      - ../_shared/common.yaml
-    set:
-      cronJob.enabled: false
+      - ../_shared/minimal.yaml
     asserts:
       - hasDocuments:
           count: 0
 
-  - it: renders a CronJob when cronJob.enabled is true
+  - it: renders a CronJob when workload.type is CronJob
     values:
-      - ../_shared/common.yaml
-    set:
-      cronJob.enabled: true
+      - ../_shared/cronjob.yaml
     asserts:
       - hasDocuments:
           count: 1
@@ -29,10 +25,7 @@ tests:
 
   - it: uses the configured schedule
     values:
-      - ../_shared/common.yaml
-    set:
-      cronJob.enabled: true
-      # cronJob.schedule=@hourly from common.yaml
+      - ../_shared/cronjob.yaml
     asserts:
       - equal:
           path: spec.schedule
@@ -42,7 +35,7 @@ tests:
     values:
       - ../_shared/minimal.yaml
     set:
-      cronJob.enabled: true
+      workload.type: CronJob
       cronJob.schedule: "0 * * * *"
     asserts:
       - equal:
@@ -51,9 +44,7 @@ tests:
 
   - it: defaults suspend to false when not set
     values:
-      - ../_shared/common.yaml
-    set:
-      cronJob.enabled: true
+      - ../_shared/cronjob.yaml
     asserts:
       - equal:
           path: spec.suspend
@@ -61,9 +52,8 @@ tests:
 
   - it: sets suspend to true when configured
     values:
-      - ../_shared/common.yaml
+      - ../_shared/cronjob.yaml
     set:
-      cronJob.enabled: true
       cronJob.suspend: true
     asserts:
       - equal:
@@ -76,7 +66,7 @@ tests:
     values:
       - ../_shared/minimal.yaml
     set:
-      cronJob.enabled: true
+      workload.type: CronJob
       cronJob.schedule: "0 * * * *"
       cronJob.suspend: "yes"
     asserts:
@@ -86,7 +76,7 @@ tests:
     values:
       - ../_shared/minimal.yaml
     set:
-      cronJob.enabled: true
+      workload.type: CronJob
       cronJob.schedule: "0 2 * * 1-5"
     asserts:
       - hasDocuments:
@@ -96,7 +86,7 @@ tests:
     values:
       - ../_shared/minimal.yaml
     set:
-      cronJob.enabled: true
+      workload.type: CronJob
       cronJob.schedule: "@hourly"
     asserts:
       - hasDocuments:
@@ -106,7 +96,7 @@ tests:
     values:
       - ../_shared/minimal.yaml
     set:
-      cronJob.enabled: true
+      workload.type: CronJob
       cronJob.schedule: "0 0 * * * 2025"
     asserts:
       - failedTemplate: {}
@@ -115,7 +105,7 @@ tests:
     values:
       - ../_shared/minimal.yaml
     set:
-      cronJob.enabled: true
+      workload.type: CronJob
       cronJob.schedule: "not-a-cron"
     asserts:
       - failedTemplate: {}
@@ -124,16 +114,16 @@ tests:
     values:
       - ../_shared/minimal.yaml
     set:
-      cronJob.enabled: true
+      workload.type: CronJob
       cronJob.schedule: "@reboot"
     asserts:
       - failedTemplate: {}
 
-  - it: schema rejects cronJob.enabled true without schedule
+  - it: schema rejects CronJob type without cronJob block
     values:
       - ../_shared/minimal.yaml
     set:
-      cronJob.enabled: true
+      workload.type: CronJob
     asserts:
       - failedTemplate: {}
 
@@ -141,7 +131,7 @@ tests:
     values:
       - ../_shared/minimal.yaml
     set:
-      cronJob.enabled: true
+      workload.type: CronJob
       cronJob.schedule: "0 * * * *"
       cronJob.concurrencyPolicy: Invalid
     asserts:
@@ -151,7 +141,7 @@ tests:
     values:
       - ../_shared/minimal.yaml
     set:
-      cronJob.enabled: true
+      workload.type: CronJob
       cronJob.schedule: "0 * * * *"
       cronJob.successfulJobsHistory: -1
     asserts:
@@ -161,8 +151,18 @@ tests:
     values:
       - ../_shared/minimal.yaml
     set:
-      cronJob.enabled: true
+      workload.type: CronJob
       cronJob.schedule: "0 * * * *"
       cronJob.failedJobsHistory: -1
+    asserts:
+      - failedTemplate: {}
+
+  - it: schema rejects HPA enabled for CronJob
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      workload.type: CronJob
+      cronJob.schedule: "0 * * * *"
+      hpa.enabled: true
     asserts:
       - failedTemplate: {}
