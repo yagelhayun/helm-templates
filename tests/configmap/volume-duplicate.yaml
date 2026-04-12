@@ -28,5 +28,5 @@ hpa:
 
 volumes:
   configMaps:
-    templates:
+    RELEASE-NAME:
       mountPath: /etc/config

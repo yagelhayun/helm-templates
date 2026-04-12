@@ -36,7 +36,7 @@ tests:
 
   # ── Naming ───────────────────────────────────────────────────────────────────
 
-  - it: uses chart name as ServiceAccount name when no name is set
+  - it: uses release name as ServiceAccount name when no name is set
     templates:
       - templates/serviceaccount.yaml
     values:
@@ -46,7 +46,7 @@ tests:
     asserts:
       - equal:
           path: metadata.name
-          value: templates
+          value: RELEASE-NAME
 
   - it: uses configured name when serviceAccount.name is set
     templates:
@@ -90,7 +90,7 @@ tests:
 
   # ── Pod reference ─────────────────────────────────────────────────────────────
 
-  - it: pod references chart name when create is true and no name is set
+  - it: pod references release name when create is true and no name is set
     templates:
       - templates/deployment.yaml
     values:
@@ -100,7 +100,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.serviceAccountName
-          value: templates
+          value: RELEASE-NAME
 
   - it: pod references configured name when create is true and name is set
     templates:

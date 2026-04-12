@@ -1,0 +1,33 @@
+global:
+  region: us-east-1
+  ignoreLookup: "true"
+
+image:
+  repository: myrepo/myapp
+  tag: prod
+
+ports:
+  api:
+    port: 5000
+
+resources:
+  cpu: 250m
+  memory: 500Mi
+  limitMultiplier: 2
+
+replicas: 3
+
+workload:
+  type: Deployment
+
+configMap:
+  enabled: false
+
+hpa:
+  enabled: false
+  maxReplicas: 4
+  resources:
+    cpu:
+      averageUtilization: 70
+    memory:
+      averageUtilization: 70

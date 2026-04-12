@@ -3,13 +3,23 @@ templates:
   - templates/deployment.yaml
 tests:
 
-  - it: renders standard app.kubernetes.io/name label
+  - it: renders app.kubernetes.io/name label defaulting to release name
     values:
       - ../_shared/minimal.yaml
     asserts:
       - equal:
           path: metadata.labels["app.kubernetes.io/name"]
-          value: templates
+          value: RELEASE-NAME
+
+  - it: renders app.kubernetes.io/name label using nameOverride
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      nameOverride: my-app
+    asserts:
+      - equal:
+          path: metadata.labels["app.kubernetes.io/name"]
+          value: my-app
 
   - it: renders app.kubernetes.io/managed-by label
     values:

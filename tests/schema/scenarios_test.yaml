@@ -94,3 +94,13 @@ tests:
       resources.unknownKey: value
     asserts:
       - failedTemplate: {}
+
+  # ── nameOverride ─────────────────────────────────────────────────────────────
+
+  - it: schema rejects empty nameOverride
+    values:
+      - ../_shared/minimal.yaml
+    set:
+      nameOverride: ""
+    asserts:
+      - failedTemplate: {}

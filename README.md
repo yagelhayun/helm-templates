@@ -103,6 +103,27 @@ global:
           variable: PLATFORM_API_KEY
 ```
 
+### Name override
+
+By default all resources are named after the Helm release name (`helm install <name>`).
+Use `nameOverride` to decouple the resource name from the release name.
+
+```yaml
+nameOverride: my-app   # all resources use this name instead of the release name
+```
+
+**Sub-charts:** when this chart is used as a dependency inside an umbrella chart,
+`nameOverride` is **required** — all sub-charts share the same release name, so there
+is no safe automatic default. A common and perfectly valid choice is to mirror what a
+standalone deployment would produce by referencing the chart name directly. Since
+values are processed through `tpl`, you can use Helm template expressions:
+
+```yaml
+# umbrella/values.yaml
+my-service:
+  nameOverride: "{{ .Chart.Name }}"   # resolves to the sub-chart's own name at render time
+```
+
 ### Image
 
 ```yaml

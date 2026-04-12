@@ -109,7 +109,7 @@ tests:
     asserts:
       - equal:
           path: metadata.labels["app.kubernetes.io/name"]
-          value: templates
+          value: RELEASE-NAME
 
   - it: renders app.kubernetes.io/managed-by label
     values:

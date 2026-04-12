@@ -83,7 +83,7 @@ tests:
           path: spec.template.spec.containers[0].envFrom
           content:
             configMapRef:
-              name: templates
+              name: RELEASE-NAME
 
   - it: as env — adds configMapRef to envFrom
     templates:
@@ -99,7 +99,7 @@ tests:
           path: spec.template.spec.containers[0].envFrom
           content:
             configMapRef:
-              name: templates
+              name: RELEASE-NAME
 
   - it: as env — does not add a pod volume
     templates:
@@ -130,9 +130,9 @@ tests:
       - contains:
           path: spec.template.spec.volumes
           content:
-            name: templates
+            name: RELEASE-NAME
             configMap:
-              name: templates
+              name: RELEASE-NAME
               defaultMode: 420
 
   - it: as volume — adds volumeMount on container
@@ -149,7 +149,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
-            name: templates
+            name: RELEASE-NAME
             mountPath: /etc/config
 
   - it: as volume — does not add configMapRef to envFrom
@@ -175,7 +175,7 @@ tests:
       - ./envfrom-duplicate.yaml
     asserts:
       - failedTemplate:
-          errorMessage: "'templates' is already listed under envFrom.configMaps — remove the duplicate entry"
+          errorMessage: "'RELEASE-NAME' is already listed under envFrom.configMaps — remove the duplicate entry"
 
   - it: fails when inline configmap name is duplicated in volumes.configMaps
     templates:
@@ -184,7 +184,7 @@ tests:
       - ./volume-duplicate.yaml
     asserts:
       - failedTemplate:
-          errorMessage: "'templates' is already listed under volumes.configMaps — remove the duplicate entry"
+          errorMessage: "'RELEASE-NAME' is already listed under volumes.configMaps — remove the duplicate entry"
 
   # ── Schema validation ────────────────────────────────────────────────────────
 

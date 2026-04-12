@@ -72,7 +72,7 @@ tests:
     asserts:
       - equal:
           path: spec.selector.matchLabels["app.kubernetes.io/name"]
-          value: templates
+          value: RELEASE-NAME
       - notExists:
           path: spec.selector.matchLabels["helm.sh/chart"]
 

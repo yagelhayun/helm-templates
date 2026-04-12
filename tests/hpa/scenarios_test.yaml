@@ -36,11 +36,9 @@ tests:
 
   - it: renders an HPA when hpa.enabled is true and activeRegion is not set
     values:
-      - ../_shared/common.yaml
-      - ../_shared/prod.yaml
+      - values-no-active-region.yaml
     set:
       hpa.enabled: true
-      activeRegion: ""
     asserts:
       - hasDocuments:
           count: 1
@@ -52,11 +50,9 @@ tests:
 
   - it: scaleTargetRef points to the correct workload kind and name
     values:
-      - ../_shared/common.yaml
-      - ../_shared/prod.yaml
+      - values-no-active-region.yaml
     set:
       hpa.enabled: true
-      activeRegion: ""
     asserts:
       - equal:
           path: spec.scaleTargetRef.kind
@@ -66,15 +62,13 @@ tests:
           value: apps/v1
       - equal:
           path: spec.scaleTargetRef.name
-          value: templates
+          value: RELEASE-NAME
 
   - it: metrics list is rendered from hpa.resources
     values:
-      - ../_shared/common.yaml
-      - ../_shared/prod.yaml
+      - values-no-active-region.yaml
     set:
       hpa.enabled: true
-      activeRegion: ""
     asserts:
       - contains:
           path: spec.metrics
@@ -97,11 +91,9 @@ tests:
 
   - it: averageUtilization defaults to 70 when not set
     values:
-      - ../_shared/common.yaml
-      - ../_shared/prod.yaml
+      - values-no-active-region.yaml
     set:
       hpa.enabled: true
-      activeRegion: ""
       hpa.resources.cpu: {}
     asserts:
       - contains:
@@ -116,11 +108,9 @@ tests:
 
   - it: minReplicas matches replicas value
     values:
-      - ../_shared/common.yaml
-      - ../_shared/prod.yaml
+      - values-no-active-region.yaml
     set:
       hpa.enabled: true
-      activeRegion: ""
     asserts:
       - equal:
           path: spec.minReplicas
@@ -140,7 +130,7 @@ tests:
           value: StatefulSet
       - equal:
           path: spec.scaleTargetRef.name
-          value: templates
+          value: RELEASE-NAME
 
   # ── Schema validation ────────────────────────────────────────────────────────
 

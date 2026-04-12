@@ -15,10 +15,12 @@
       ],
       "properties": {
         "key": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "variable": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       }
     },
@@ -60,13 +62,16 @@
       "additionalProperties": false,
       "properties": {
         "registry": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "repository": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "tag": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "pullPolicy": {
           "type": "string",
@@ -79,7 +84,8 @@
         "pullSecrets": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         }
       }
@@ -97,7 +103,8 @@
           "maximum": 65535
         },
         "appProtocol": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "nodePort": {
           "type": "integer",
@@ -156,7 +163,8 @@
           ],
           "properties": {
             "path": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "scheme": {
               "type": "string",
@@ -234,7 +242,8 @@
           ]
         },
         "memory": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "limitMultiplier": {
           "type": "number",
@@ -282,7 +291,8 @@
       ],
       "properties": {
         "key": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "operator": {
           "type": "string",
@@ -318,7 +328,8 @@
           "maximum": 100
         },
         "key": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "operator": {
           "type": "string",
@@ -347,7 +358,8 @@
       ],
       "properties": {
         "topologyKey": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       }
     },
@@ -365,7 +377,8 @@
           "maximum": 100
         },
         "topologyKey": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       }
     },
@@ -385,7 +398,8 @@
             "minimum": 1
           },
           "topologyKey": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "whenUnsatisfiable": {
             "type": "string",
@@ -482,12 +496,14 @@
       ],
       "properties": {
         "ip": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "hostnames": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         }
       }
@@ -508,7 +524,8 @@
           ]
         },
         "localhostProfile": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       }
     },
@@ -556,7 +573,8 @@
             ],
             "properties": {
               "name": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               },
               "value": {
                 "type": "string"
@@ -615,7 +633,8 @@
           "$ref": "#/definitions/seccompProfile"
         },
         "procMount": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       }
     },
@@ -627,7 +646,8 @@
       ],
       "properties": {
         "mountPath": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "defaultMode": {
           "type": "integer",
@@ -647,7 +667,8 @@
       "additionalProperties": false,
       "properties": {
         "mountPath": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "defaultMode": {
           "type": "integer",
@@ -664,7 +685,8 @@
       ],
       "properties": {
         "mountPath": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "readOnly": {
           "type": "boolean"
@@ -680,10 +702,12 @@
       ],
       "properties": {
         "hostPath": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "mountPath": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "type": {
           "type": "string",
@@ -744,10 +768,12 @@
       ],
       "properties": {
         "size": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "storageClass": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "accessMode": {
           "type": "string",
@@ -768,13 +794,16 @@
       ],
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "storageClass": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "size": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "accessMode": {
           "type": "string",
@@ -1069,7 +1098,8 @@
       ],
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "image": {
           "$ref": "#/definitions/imageConfig"
@@ -1163,10 +1193,16 @@
       }
     },
     "primaryPort": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
+    },
+    "nameOverride": {
+      "type": "string",
+      "minLength": 1
     },
     "activeRegion": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "replicas": {
       "type": "integer",
@@ -1181,7 +1217,8 @@
       "additionalProperties": false,
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "create": {
           "type": "boolean"
@@ -1189,7 +1226,8 @@
         "imagePullSecrets": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         }
       }
@@ -1250,7 +1288,8 @@
       "$ref": "#/definitions/containerSecurityContextConfig"
     },
     "priorityClassName": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "workload": {
       "$ref": "#/definitions/workloadConfig"
@@ -1276,7 +1315,8 @@
           ]
         },
         "mountPath": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "data": {
           "type": "object",
@@ -1366,7 +1406,8 @@
           ]
         },
         "clusterIP": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "externalName": {
           "type": "object",
@@ -1384,7 +1425,8 @@
         "externalIPs": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         },
         "publishNotReadyAddresses": {
@@ -1469,16 +1511,19 @@
           "additionalProperties": false,
           "properties": {
             "ip": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "sourceRanges": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               }
             },
             "class": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "nodePort": {
               "type": "object",

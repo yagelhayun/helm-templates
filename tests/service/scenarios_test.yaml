@@ -55,7 +55,7 @@ tests:
     asserts:
       - equal:
           path: spec.selector["app.kubernetes.io/name"]
-          value: templates
+          value: RELEASE-NAME
 
   # ── Multiple ports ───────────────────────────────────────────────────────────
 
