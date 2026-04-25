@@ -578,63 +578,6 @@ rawManifests:
 
 ---
 
-## Umbrella charts
-
-Depend on `helm-templates` multiple times using aliases — one per service. `global` values are shared automatically across all instances.
-
-**`Chart.yaml`**:
-```yaml
-dependencies:
-  - name: helm-templates
-    version: 0.3.0
-    repository: "oci://ghcr.io/yagelhayun/helm-charts"
-    alias: api
-  - name: helm-templates
-    version: 0.3.0
-    repository: "oci://ghcr.io/yagelhayun/helm-charts"
-    alias: worker
-```
-
-**`values.yaml`**:
-```yaml
-global:
-  region: us-east-1
-  image:
-    pullSecrets: [registry-credentials]
-
-api:
-  port: 8080
-  replicas: 2
-  image:
-    url: myrepo/api
-    tag: "1.0.0"
-  resources:
-    cpu: 500m
-    memory: 512Mi
-  workload:
-    type: Deployment
-  service:
-    enabled: true
-
-worker:
-  port: 9090
-  replicas: 5
-  image:
-    url: myrepo/worker
-    tag: "1.0.0"
-  resources:
-    cpu: 250m
-    memory: 256Mi
-  workload:
-    type: Deployment
-  service:
-    enabled: false
-```
-
-Each alias becomes the chart name used for resource naming. Schema validation applies independently per sub-chart.
-
----
-
 ## Schema validation
 
 `values.schema.json` is validated by Helm before rendering. Unknown keys at any level are rejected (`additionalProperties: false` throughout). If Helm rejects a value, check the schema for allowed keys.
@@ -664,6 +607,12 @@ helm template my-service . -f values.yaml --kube-context staging-readonly
 **PreSync hook:** A Helm hook (`helm.sh/hook: pre-sync`) running a Job that checks for required Secrets/ConfigMaps before sync proceeds. Use this only if you have strict zero-downtime requirements — it adds complexity and a sync round-trip.
 
 **Accept the limitation:** Treat schema validation as your pre-flight gate and let ArgoCD's sync health (pod `CrashLoopBackOff` / `OOMKilled`) surface missing dependencies post-apply. Practical for teams with fast feedback loops and non-critical workloads.
+
+---
+
+## Best practices and advanced patterns
+
+`docs/BEST_PRACTICES.md` covers advanced usage patterns: umbrella charts with a shared configuration subchart, structured config serialization with `toJson`, and lists as delimited strings. Standard single-service deployments don't need any of it — it's there when your setup grows.
 
 ---
 
