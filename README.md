@@ -664,3 +664,23 @@ helm template my-service . -f values.yaml --kube-context staging-readonly
 **PreSync hook:** A Helm hook (`helm.sh/hook: pre-sync`) running a Job that checks for required Secrets/ConfigMaps before sync proceeds. Use this only if you have strict zero-downtime requirements — it adds complexity and a sync round-trip.
 
 **Accept the limitation:** Treat schema validation as your pre-flight gate and let ArgoCD's sync health (pod `CrashLoopBackOff` / `OOMKilled`) surface missing dependencies post-apply. Practical for teams with fast feedback loops and non-critical workloads.
+
+---
+
+## Claude Code / AI assistance
+
+`docs/HELM_CHART_SKILLS.md` is a reference file for AI assistants (Claude Code, Cursor, etc.) that teaches them this chart's values API, rules, and common patterns. With it loaded, you can generate a complete, schema-valid values file from a plain-language prompt.
+
+**Setup (one time):**
+
+1. Copy `docs/HELM_CHART_SKILLS.md` into your project's `.claude/` directory.
+2. Add this line to your project's `CLAUDE.md` (or `.claude/CLAUDE.md`):
+   ```
+   @.claude/HELM_CHART_SKILLS.md
+   ```
+
+**Usage:**
+
+Prompt Claude Code naturally — it will produce a valid values file without needing the full README:
+
+> *"Generate a values file for a Java service: 3 replicas, 500m CPU, 1Gi memory, HTTP probe on /actuator/health, active in us-east-1 only."*
